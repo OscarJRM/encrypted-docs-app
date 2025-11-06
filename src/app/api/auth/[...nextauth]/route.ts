@@ -2,7 +2,43 @@
   import AzureAD from "next-auth/providers/azure-ad";
   import CredentialsProvider from "next-auth/providers/credentials";
 
+  type TestUser = {
+    id: string;
+    email: string;
+    password: string;
+    name: string;
+    role: "admin" | "user";
+  };
+
+  const TEST_USERS: TestUser[] = [
+    {
+      id: "admin",
+      email: "admin@example.com",
+      password: "admin123",
+      name: "Administrador",
+      role: "admin",
+    },
+    {
+      id: "user",
+      email: "user@example.com",
+      password: "user123",
+      name: "Cliente",
+      role: "user",
+    },
+  ];
+
+  const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET ?? "dev-only-nextauth-secret";
+
+  if (!process.env.NEXTAUTH_SECRET) {
+    process.env.NEXTAUTH_SECRET = NEXTAUTH_SECRET;
+  }
+
+  if (!process.env.NEXTAUTH_URL && process.env.NODE_ENV === "development") {
+    process.env.NEXTAUTH_URL = "http://localhost:3000";
+  }
+
   export const authConfig: NextAuthOptions = {
+    secret: NEXTAUTH_SECRET,
     providers: [
       CredentialsProvider({
         name: "Credentials",
@@ -15,15 +51,18 @@
             return null;
           }
 
-          if (credentials.email === "demo@example.com" && credentials.password === "demo123") {
-            return {
-              id: "1",
-              email: "demo@example.com",
-              name: "Demo User",
-            };
+          const normalizedEmail = credentials.email.toLowerCase();
+
+          const user = TEST_USERS.find(
+            ({ email, password }) => email === normalizedEmail && password === credentials.password,
+          );
+
+          if (!user) {
+            return null;
           }
 
-          return null;
+          const { password, ...userWithoutPassword } = user;
+          return userWithoutPassword;
         },
       }),
       ...(process.env.AZURE_AD_CLIENT_ID && 
@@ -45,13 +84,15 @@
     callbacks: {
       async jwt({ token, user }) {
         if (user) {
-          token.id = user.id;
+          token.id = (user as TestUser).id;
+          token.role = (user as TestUser).role;
         }
         return token;
       },
       async session({ session, token }) {
         if (session.user) {
           session.user.id = token.id as string;
+          (session.user as typeof session.user & { role?: string }).role = token.role as string;
         }
         return session;
       },
