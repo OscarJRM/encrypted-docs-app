@@ -8,62 +8,50 @@ import {
   CardContent,
   CardFooter,
 } from "@/app/components/ui/card";
-import { Button } from "@/app/components/ui/button";
 import { MicrosoftSignInButton } from "./MicrosoftSignInButton";
-import { cn } from "@/app/lib/utils";
+import { EmailPasswordForm } from "./EmailPasswordForm";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const TEST_USER_OPTIONS = {
-  admin: {
-    label: "Administrador",
-    description: "Acceso a la vista de administración",
+const TEST_USERS = [
+  {
+    role: "Administrador",
     email: "admin@example.com",
     password: "admin123",
     redirect: "/admin",
   },
-  user: {
-    label: "Cliente",
-    description: "Acceso a la vista para clientes",
+  {
+    role: "Cliente",
     email: "user@example.com",
     password: "user123",
     redirect: "/",
   },
-} as const;
-
-type TestRole = keyof typeof TEST_USER_OPTIONS;
+] as const;
 
 export function LoginCard() {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [selectedRole, setSelectedRole] = useState<TestRole>("admin");
-  const [loading, setLoading] = useState(false);
 
-  const handleQuickSignIn = async () => {
-    const selectedUser = TEST_USER_OPTIONS[selectedRole];
+  const handleEmailPasswordSubmit = async (credentials: { email: string; password: string }) => {
     setError("");
-    setLoading(true);
+    const normalizedEmail = credentials.email.toLowerCase();
+    const matchedUser = TEST_USERS.find((user) => user.email === normalizedEmail);
 
-    try {
-      const result = await signIn("credentials", {
-        email: selectedUser.email,
-        password: selectedUser.password,
-        redirect: false,
-        callbackUrl: selectedUser.redirect,
-      });
+    const result = await signIn("credentials", {
+      ...credentials,
+      redirect: false,
+      callbackUrl: matchedUser?.redirect ?? "/",
+    });
 
-      if (result?.error) {
-        setError("No se pudo iniciar sesión con el perfil seleccionado.");
-        return;
-      }
-
-      const destination = result?.url ?? selectedUser.redirect;
-      router.push(destination);
-      router.refresh();
-    } finally {
-      setLoading(false);
+    if (result?.error) {
+      setError("Credenciales inválidas");
+      return;
     }
+
+    const destination = result?.url ?? matchedUser?.redirect ?? "/";
+    router.push(destination);
+    router.refresh();
   };
 
   return (
@@ -71,7 +59,7 @@ export function LoginCard() {
       <CardHeader>
         <CardTitle>Iniciar sesión</CardTitle>
         <CardDescription>
-          Selecciona un rol temporal mientras conectamos con Microsoft 365.
+          Usa temporalmente las credenciales de prueba mientras conectamos con Microsoft 365.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -80,41 +68,18 @@ export function LoginCard() {
             {error}
           </div>
         )}
-        <div className="grid gap-3">
-          {Object.entries(TEST_USER_OPTIONS).map(([role, info]) => {
-            const isSelected = role === selectedRole;
-            return (
-              <button
-                type="button"
-                key={role}
-                onClick={() => setSelectedRole(role as TestRole)}
-                className={cn(
-                  "rounded-lg border p-3 text-left transition-all",
-                  isSelected
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:bg-muted",
-                )}
-              >
-                <p className="font-medium">{info.label}</p>
-                <p className="text-sm text-muted-foreground">{info.description}</p>
-                <div className="mt-2 grid gap-1 text-xs font-mono text-muted-foreground">
-                  <div>Correo: {info.email}</div>
-                  <div>Contraseña: {info.password}</div>
-                </div>
-              </button>
-            );
-          })}
+        <EmailPasswordForm onSubmit={handleEmailPasswordSubmit} />
+        <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">Perfiles de prueba disponibles:</p>
+          {TEST_USERS.map((user) => (
+            <div key={user.email} className="rounded-md border border-dashed border-border p-3">
+              <p className="font-medium text-foreground">{user.role}</p>
+              <p>Correo: {user.email}</p>
+              <p>Contraseña: {user.password}</p>
+              <p>Redirige a: {user.redirect}</p>
+            </div>
+          ))}
         </div>
-        <Button
-          type="button"
-          onClick={handleQuickSignIn}
-          disabled={loading}
-          className="mt-4 w-full"
-        >
-          {loading
-            ? "Ingresando..."
-            : `Ingresar como ${TEST_USER_OPTIONS[selectedRole].label}`}
-        </Button>
       </CardContent>
       <CardFooter className="flex flex-col gap-3">
         <div className="h-px w-full bg-border" />
