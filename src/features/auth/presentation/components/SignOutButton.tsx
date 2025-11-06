@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/app/components/ui/button";
 import { signOut } from "next-auth/react";
+import { useState, type ReactNode } from "react";
+
+import { Button } from "@/app/components/ui/button";
 
 interface SignOutButtonProps {
   className?: string;
+  variant?: React.ComponentProps<typeof Button>["variant"];
+  children?: ReactNode;
 }
 
-export function SignOutButton({ className }: SignOutButtonProps) {
+export function SignOutButton({
+  className,
+  variant = "outline",
+  children,
+}: SignOutButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleSignOut = async () => {
@@ -23,12 +30,12 @@ export function SignOutButton({ className }: SignOutButtonProps) {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={variant}
       className={className}
       onClick={handleSignOut}
       disabled={loading}
     >
-      {loading ? "Saliendo..." : "Cerrar sesión"}
+      {loading ? "Saliendo..." : children ?? "Cerrar sesión"}
     </Button>
   );
 }

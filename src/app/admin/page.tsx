@@ -1,15 +1,17 @@
-import { SignOutButton } from "@/features/auth/presentation/components/SignOutButton";
-
 export default function AdminPage() {
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1>Admin Page</h1>
-          <p>Welcome to the admin section of the application.</p>
-        </div>
-        <SignOutButton />
+    <section className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Panel de administración</h1>
+        <p className="text-muted-foreground">
+          Bienvenido a la sección administrativa de la aplicación.
+        </p>
       </div>
-    </div>
+      <div className="rounded-lg border border-dashed p-6">
+        <p className="text-sm text-muted-foreground">
+          Usa el menú lateral para navegar entre las distintas secciones del panel.
+        </p>
+      </div>
+    </section>
   );
 }

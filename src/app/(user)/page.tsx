@@ -1,15 +1,17 @@
-import { SignOutButton } from "@/features/auth/presentation/components/SignOutButton";
-
 export default function UserPage() {
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1>User Page</h1>
-          <p>Welcome to the user section of the application.</p>
-        </div>
-        <SignOutButton />
+    <section className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Inicio</h1>
+        <p className="text-muted-foreground">
+          Bienvenido a tu panel personal.
+        </p>
       </div>
-    </div>
+      <div className="rounded-lg border border-dashed p-6">
+        <p className="text-sm text-muted-foreground">
+          Selecciona una opción del menú lateral para comenzar.
+        </p>
+      </div>
+    </section>
   );
 }
