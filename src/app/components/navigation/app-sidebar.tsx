@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -163,8 +164,15 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
-          <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md font-semibold">
-            8v
+          <div className="flex size-9 items-center justify-center">
+            <Image
+              src="/logo_encrypt.png"
+              alt="Logo 8vo"
+              width={36}
+              height={36}
+              className="size-9 rounded-md object-contain"
+              priority
+            />
           </div>
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-semibold">
