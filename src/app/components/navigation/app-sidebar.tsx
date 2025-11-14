@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -35,18 +36,22 @@ type Role = "admin" | "user";
 
 type RoleHref = Partial<Record<Role, string>>;
 
+type MatchStrategy = "exact" | "prefix";
+
 type NavItem = {
   label: string;
   icon: LucideIcon;
   href: RoleHref;
   roles?: Role[];
   children?: NavChild[];
+  matchStrategy?: MatchStrategy;
 };
 
 type NavChild = {
   label: string;
   href: RoleHref;
   roles?: Role[];
+  matchStrategy?: MatchStrategy;
 };
 
 const roleLabels: Record<Role, string> = {
@@ -59,6 +64,7 @@ const navItems: NavItem[] = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: { admin: "/admin", user: "/" },
+    matchStrategy: "exact",
   },
   {
     label: "Documentos",
@@ -90,7 +96,7 @@ const navItems: NavItem[] = [
   {
     label: "Crear documento",
     icon: FilePlus2,
-    href: { admin: "/admin/documentos/nuevo", user: "/documentos/nuevo" },
+    href: { admin: "/admin/documents/new", user: "/documentos/nuevo" },
   },
   {
     label: "Usuarios",
@@ -119,16 +125,30 @@ function hasAccess(allowedRoles: Role[] | undefined, role: Role) {
   return allowedRoles.includes(role);
 }
 
-function isActivePath(pathname: string, candidate: string | undefined) {
+function isActivePath(
+  pathname: string,
+  candidate: string | undefined,
+  matchStrategy: MatchStrategy = "prefix"
+) {
   if (!candidate || candidate === "#") {
     return false;
   }
 
-  if (candidate === "/") {
-    return pathname === "/";
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
+  const normalizedCandidate = candidate.replace(/\/+$/, "") || "/";
+
+  if (normalizedCandidate === "/") {
+    return normalizedPath === "/";
   }
 
-  return pathname.startsWith(candidate);
+  if (matchStrategy === "exact") {
+    return normalizedPath === normalizedCandidate;
+  }
+
+  return (
+    normalizedPath === normalizedCandidate ||
+    normalizedPath.startsWith(`${normalizedCandidate}/`)
+  );
 }
 
 export function AppSidebar() {
@@ -144,8 +164,15 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
-          <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md font-semibold">
-            8v
+          <div className="flex size-9 items-center justify-center">
+            <Image
+              src="/logo_encrypt.png"
+              alt="Logo 8vo"
+              width={36}
+              height={36}
+              className="size-9 rounded-md object-contain"
+              priority
+            />
           </div>
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-semibold">
@@ -168,9 +195,17 @@ export function AppSidebar() {
                   const href = resolveHref(item.href, role);
                   const hasChildren = Boolean(item.children?.length);
                   const itemIsActive =
-                    isActivePath(pathname, href) ||
+                    isActivePath(
+                      pathname,
+                      href,
+                      item.matchStrategy ?? "prefix"
+                    ) ||
                     (item.children ?? []).some((child) =>
-                      isActivePath(pathname, resolveHref(child.href, role))
+                      isActivePath(
+                        pathname,
+                        resolveHref(child.href, role),
+                        child.matchStrategy ?? "prefix"
+                      )
                     );
 
                   return (
@@ -197,7 +232,11 @@ export function AppSidebar() {
                                 <SidebarMenuSubItem key={child.label}>
                                   <SidebarMenuSubButton
                                     asChild
-                                    isActive={isActivePath(pathname, childHref)}
+                                    isActive={isActivePath(
+                                      pathname,
+                                      childHref,
+                                      child.matchStrategy ?? "prefix"
+                                    )}
                                   >
                                     <Link href={childHref}>{child.label}</Link>
                                   </SidebarMenuSubButton>
