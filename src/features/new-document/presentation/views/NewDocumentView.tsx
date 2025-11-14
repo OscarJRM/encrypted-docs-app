@@ -99,62 +99,61 @@ export function NewDocumentView() {
 
   return (
     <section className="space-y-8">
-      <header className="space-y-3">
-        <p className="text-sm font-medium uppercase text-primary">
-          Nuevo documento
-        </p>
+      <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Crear Documento
+          Crear documento
         </h1>
-        <p className="text-muted-foreground max-w-3xl">
-          Completa la información requerida para preparar, firmar y enviar tu
-          documento oficial. Todos los campos son editables antes de la firma.
+        <p className="text-muted-foreground max-w-2xl">
+          Completa la información esencial para preparar, firmar y enviar tu
+          documento oficial.
         </p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Tipo de documento</CardTitle>
-          <CardDescription>
-            Selecciona la estructura que mejor se adapte a tu comunicación.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          {documentTypeOptions.map((option) => (
-            <SelectableCard
-              key={option.id}
-              id={option.id}
-              title={option.title}
-              description={option.description}
-              icon={option.icon}
-              selected={documentType === option.id}
-              onSelect={(value) => setDocumentType(value as DocumentType)}
-            />
-          ))}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tipo de documento</CardTitle>
+            <CardDescription>
+              Selecciona la estructura que mejor se adapte a tu comunicación.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {documentTypeOptions.map((option) => (
+              <SelectableCard
+                key={option.id}
+                id={option.id}
+                title={option.title}
+                description={option.description}
+                icon={option.icon}
+                selected={documentType === option.id}
+                onSelect={(value) => setDocumentType(value as DocumentType)}
+              />
+            ))}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Categoría</CardTitle>
-          <CardDescription>
-            Define el nivel de seguridad y visibilidad del documento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          {categoryOptions.map((option) => (
-            <SelectableCard
-              key={option.id}
-              id={option.id}
-              title={option.title}
-              description={option.description}
-              icon={option.icon}
-              selected={category === option.id}
-              onSelect={(value) => setCategory(value as Category)}
-            />
-          ))}
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Categoría</CardTitle>
+            <CardDescription>
+              Define el nivel de seguridad y visibilidad del documento.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {categoryOptions.map((option) => (
+              <SelectableCard
+                key={option.id}
+                id={option.id}
+                title={option.title}
+                description={option.description}
+                icon={option.icon}
+                selected={category === option.id}
+                onSelect={(value) => setCategory(value as Category)}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
