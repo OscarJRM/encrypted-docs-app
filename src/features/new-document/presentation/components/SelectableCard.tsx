@@ -25,11 +25,10 @@ export function SelectableCard({
       type="button"
       onClick={() => onSelect(id)}
       className={cn(
-        "group relative flex min-h-[128px] flex-1 flex-col justify-between rounded-2xl border p-4 text-left transition",
-        "bg-card/80 hover:bg-card focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none",
-        selected
-          ? "border-primary/70 shadow-lg shadow-primary/15"
-          : "border-border/70"
+        "group relative flex min-h-[128px] flex-1 flex-col justify-between rounded-2xl border border-transparent p-4 text-left transition",
+        "shadow-[var(--shadow-card)] hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+        "bg-[color:var(--palette-bg-light)]",
+        selected ? "ring-2 ring-primary/60" : "ring-0 ring-transparent"
       )}
     >
       <div

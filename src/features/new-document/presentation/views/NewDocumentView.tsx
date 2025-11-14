@@ -110,7 +110,7 @@ export function NewDocumentView() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="border-transparent">
           <CardHeader>
             <CardTitle>Tipo de documento</CardTitle>
             <CardDescription>
@@ -132,7 +132,7 @@ export function NewDocumentView() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-transparent">
           <CardHeader>
             <CardTitle>Categoría</CardTitle>
             <CardDescription>
@@ -155,7 +155,7 @@ export function NewDocumentView() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-transparent">
         <CardHeader>
           <CardTitle>Información del documento</CardTitle>
           <CardDescription>
@@ -185,7 +185,7 @@ export function NewDocumentView() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-transparent">
         <CardHeader>
           <CardTitle>Destinatarios</CardTitle>
           <CardDescription>
@@ -242,7 +242,7 @@ export function NewDocumentView() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-transparent">
         <CardHeader>
           <CardTitle>Archivos adjuntos</CardTitle>
           <CardDescription>

@@ -65,6 +65,10 @@
   --palette-warning: oklch(0.7 0.05 100);
   --palette-success: oklch(0.7 0.05 160);
   --palette-info: oklch(0.7 0.05 260);
+  --shadow-card: 0px 6px 12px rgba(0, 0, 0, 0.4),
+    0px 16px 32px rgba(2, 4, 24, 0.3);
+  --shadow-surface: 0px 12px 32px rgba(0, 0, 0, 0.35),
+    0px 2px 6px rgba(255, 255, 255, 0.05);
 
   --background: var(--palette-bg-dark);
   --foreground: var(--palette-text);
@@ -117,6 +121,10 @@ html.light {
   --palette-warning: oklch(0.5 0.05 100);
   --palette-success: oklch(0.5 0.05 160);
   --palette-info: oklch(0.5 0.05 260);
+  --shadow-card: 0px 6px 14px rgba(15, 23, 42, 0.18),
+    0px 20px 30px rgba(15, 23, 42, 0.12);
+  --shadow-surface: 0px 8px 22px rgba(15, 23, 42, 0.16),
+    0px 2px 6px rgba(15, 23, 42, 0.08);
 }
 
 @layer base {
