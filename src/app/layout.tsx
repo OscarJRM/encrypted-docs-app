@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title: "Encrypted Docs",
   description: "Gestión segura de documentos encriptados",
   icons: {
-    icon: "/icon.png",
+    icon: "/icon.ico",
   },
 };
 
