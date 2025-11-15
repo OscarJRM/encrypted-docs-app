@@ -1,13 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import TextAlign from "@tiptap/extension-text-align";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
 import {
   Bold,
   Code,
   Code2,
   CornerDownLeft,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
   Eraser,
   Heading1,
   Heading2,
@@ -21,6 +28,9 @@ import {
   Quote,
   Redo,
   Strikethrough,
+  Link2,
+  Unlink,
+  ImageIcon,
   Underline,
   Undo,
 } from "lucide-react";
@@ -39,10 +49,29 @@ type RichTextEditorProps = {
 };
 
 export function RichTextEditor({ value, onChange, id }: RichTextEditorProps) {
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+      }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+      Link.configure({
+        openOnClick: false,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          class: "text-primary underline underline-offset-4",
+        },
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: "my-4 rounded-2xl shadow-[var(--shadow-card)] max-w-full",
+        },
       }),
       UnderlineMark,
       HighlightMark,
@@ -70,6 +99,40 @@ export function RichTextEditor({ value, onChange, id }: RichTextEditorProps) {
       editor.commands.clearContent();
     }
   }, [value, editor]);
+
+  const insertLink = () => {
+    if (!editor) return;
+    const previousUrl = editor.getAttributes("link").href;
+    const url = window.prompt("Ingresa la URL", previousUrl ?? "https://");
+    if (url === null) return;
+    if (url === "") {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  };
+
+  const removeLink = () => {
+    editor?.chain().focus().unsetLink().run();
+  };
+
+  const onSelectImage = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !editor) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: result, alt: file.name || "Imagen" })
+        .run();
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
 
   const controls = [
     {
@@ -191,6 +254,34 @@ export function RichTextEditor({ value, onChange, id }: RichTextEditorProps) {
       canRun: () => editor?.can().chain().focus().setHardBreak().run(),
     },
     {
+      label: "Alinear izquierda",
+      icon: AlignLeft,
+      action: () => editor?.chain().focus().setTextAlign("left").run(),
+      isActive: () => editor?.isActive({ textAlign: "left" }),
+      canRun: () => editor?.can().chain().focus().setTextAlign("left").run(),
+    },
+    {
+      label: "Centrar",
+      icon: AlignCenter,
+      action: () => editor?.chain().focus().setTextAlign("center").run(),
+      isActive: () => editor?.isActive({ textAlign: "center" }),
+      canRun: () => editor?.can().chain().focus().setTextAlign("center").run(),
+    },
+    {
+      label: "Alinear derecha",
+      icon: AlignRight,
+      action: () => editor?.chain().focus().setTextAlign("right").run(),
+      isActive: () => editor?.isActive({ textAlign: "right" }),
+      canRun: () => editor?.can().chain().focus().setTextAlign("right").run(),
+    },
+    {
+      label: "Justificar",
+      icon: AlignJustify,
+      action: () => editor?.chain().focus().setTextAlign("justify").run(),
+      isActive: () => editor?.isActive({ textAlign: "justify" }),
+      canRun: () => editor?.can().chain().focus().setTextAlign("justify").run(),
+    },
+    {
       label: "Deshacer",
       icon: Undo,
       action: () => editor?.chain().focus().undo().run(),
@@ -220,30 +311,71 @@ export function RichTextEditor({ value, onChange, id }: RichTextEditorProps) {
   ];
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-1 rounded-xl border border-border/40 bg-muted/40 p-2">
-        {controls.map(({ label, icon: Icon, action, isActive, canRun }) => (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-border/40 bg-muted/30 p-3">
+        <div className="flex flex-wrap justify-center gap-1">
+          {controls.map(({ label, icon: Icon, action, isActive, canRun }) => (
+            <Button
+              key={label}
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => action?.()}
+              disabled={!editor || canRun?.() === false}
+              className={cn(
+                "text-muted-foreground",
+                isActive?.()
+                  ? "bg-primary/10 text-primary"
+                  : "hover:bg-primary/5 hover:text-foreground"
+              )}
+            >
+              <Icon className="size-4" />
+            </Button>
+          ))}
+        </div>
+        <div className="flex flex-wrap justify-center gap-1">
           <Button
-            key={label}
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => action?.()}
-            disabled={!editor || canRun?.() === false}
-            className={cn(
-              "text-muted-foreground",
-              isActive?.()
-                ? "bg-primary/10 text-primary"
-                : "hover:bg-primary/5 hover:text-foreground"
-            )}
+            disabled={!editor}
+            onClick={insertLink}
+            className="text-muted-foreground hover:bg-primary/5 hover:text-foreground"
           >
-            <Icon className="size-4" />
+            <Link2 className="size-4" />
           </Button>
-        ))}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!editor}
+            onClick={removeLink}
+            className="text-muted-foreground hover:bg-primary/5 hover:text-foreground"
+          >
+            <Unlink className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!editor}
+            onClick={() => imageInputRef.current?.click()}
+            className="text-muted-foreground hover:bg-primary/5 hover:text-foreground"
+          >
+            <ImageIcon className="size-4" />
+          </Button>
+        </div>
       </div>
       <div className="rounded-2xl bg-card/40 p-2">
         <EditorContent id={id} editor={editor} />
       </div>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        onChange={onSelectImage}
+        className="hidden"
+      />
     </div>
   );
 }
