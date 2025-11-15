@@ -134,4 +134,34 @@ html.light {
   body {
     @apply bg-background text-foreground;
   }
+  .tiptap {
+    @apply space-y-4;
+  }
+  .tiptap p {
+    @apply text-base leading-relaxed text-foreground;
+  }
+  .tiptap h1 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  .tiptap h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  .tiptap h3 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+  .tiptap ul {
+    @apply list-disc pl-6;
+  }
+  .tiptap ol {
+    @apply list-decimal pl-6;
+  }
+  .tiptap blockquote {
+    @apply border-l-4 border-primary/40 pl-4 italic text-muted-foreground;
+  }
+  .tiptap pre {
+    @apply rounded-xl bg-muted/50 p-4 font-mono text-sm;
+  }
+  .tiptap code {
+    @apply rounded-md bg-muted/60 px-1.5 py-0.5 font-mono text-sm;
+  }
 }

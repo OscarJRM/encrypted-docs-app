@@ -20,8 +20,8 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Textarea } from "@/app/components/ui/textarea";
 import { SelectableCard } from "../components/SelectableCard";
+import { RichTextEditor } from "../components/RichTextEditor";
 
 type DocumentType = "oficio" | "memorando";
 type Category = "normal" | "cifrado";
@@ -96,6 +96,8 @@ export function NewDocumentView() {
     if (!files) return;
     setAttachments(Array.from(files));
   };
+
+  const contentControlId = "document-content";
 
   return (
     <section className="space-y-8">
@@ -173,13 +175,11 @@ export function NewDocumentView() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="content">Contenido del documento</Label>
-            <Textarea
-              id="content"
-              placeholder="Escribe el contenido principal, estructura y detalles relevantes..."
-              className="min-h-[220px] resize-y"
+            <Label htmlFor={contentControlId}>Contenido del documento</Label>
+            <RichTextEditor
+              id={contentControlId}
               value={content}
-              onChange={(event) => setContent(event.target.value)}
+              onChange={setContent}
             />
           </div>
         </CardContent>
