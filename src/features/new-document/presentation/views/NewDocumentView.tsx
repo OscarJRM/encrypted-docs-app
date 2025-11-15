@@ -97,8 +97,6 @@ export function NewDocumentView() {
     setAttachments(Array.from(files));
   };
 
-  const contentControlId = "document-content";
-
   return (
     <section className="space-y-8">
       <header className="space-y-2">
@@ -175,12 +173,8 @@ export function NewDocumentView() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor={contentControlId}>Contenido del documento</Label>
-            <RichTextEditor
-              id={contentControlId}
-              value={content}
-              onChange={setContent}
-            />
+            <Label htmlFor="content">Contenido del documento</Label>
+            <RichTextEditor value={content} onChange={setContent} />
           </div>
         </CardContent>
       </Card>
