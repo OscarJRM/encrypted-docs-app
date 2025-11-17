@@ -20,7 +20,10 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { SelectableCard } from "../components/SelectableCard";
+import {
+  SelectableCard,
+  type SelectableCardAccent,
+} from "../components/SelectableCard";
 import { RichTextEditor } from "../components/RichTextEditor";
 
 type DocumentType = "oficio" | "memorando";
@@ -31,18 +34,21 @@ const documentTypeOptions: Array<{
   title: string;
   description: string;
   icon: LucideIcon;
+  accent: SelectableCardAccent;
 }> = [
   {
     id: "oficio",
     title: "Oficio",
     description: "Comunicados formales entre instituciones o entes externos.",
     icon: FileText,
+    accent: "primary",
   },
   {
     id: "memorando",
     title: "Memorando",
     description: "Notas internas para equipos o áreas específicas.",
     icon: PenLine,
+    accent: "info",
   },
 ];
 
@@ -51,18 +57,21 @@ const categoryOptions: Array<{
   title: string;
   description: string;
   icon: LucideIcon;
+  accent: SelectableCardAccent;
 }> = [
   {
     id: "normal",
     title: "Normal",
     description: "Documento visible para los destinatarios sin cifrado.",
     icon: UserPlus,
+    accent: "success",
   },
   {
     id: "cifrado",
     title: "Cifrado",
     description: "Protección avanzada con acceso restringido y seguimiento.",
     icon: ShieldCheck,
+    accent: "secondary",
   },
 ];
 
@@ -100,7 +109,7 @@ export function NewDocumentView() {
   return (
     <section className="space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Crear documento
         </h1>
         <p className="text-muted-foreground max-w-2xl">
@@ -110,7 +119,7 @@ export function NewDocumentView() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-transparent">
+        <Card className="border-border/70 bg-card/80">
           <CardHeader>
             <CardTitle>Tipo de documento</CardTitle>
             <CardDescription>
@@ -127,12 +136,13 @@ export function NewDocumentView() {
                 icon={option.icon}
                 selected={documentType === option.id}
                 onSelect={(value) => setDocumentType(value as DocumentType)}
+                accent={option.accent}
               />
             ))}
           </CardContent>
         </Card>
 
-        <Card className="border-transparent">
+        <Card className="border-border/70 bg-card/80">
           <CardHeader>
             <CardTitle>Categoría</CardTitle>
             <CardDescription>
@@ -149,13 +159,14 @@ export function NewDocumentView() {
                 icon={option.icon}
                 selected={category === option.id}
                 onSelect={(value) => setCategory(value as Category)}
+                accent={option.accent}
               />
             ))}
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-transparent">
+      <Card className="border-border/70 bg-card/80">
         <CardHeader>
           <CardTitle>Información del documento</CardTitle>
           <CardDescription>
@@ -179,7 +190,7 @@ export function NewDocumentView() {
         </CardContent>
       </Card>
 
-      <Card className="border-transparent">
+      <Card className="border-border/70 bg-card/80">
         <CardHeader>
           <CardTitle>Destinatarios</CardTitle>
           <CardDescription>
@@ -218,13 +229,13 @@ export function NewDocumentView() {
               recipients.map((email) => (
                 <span
                   key={email}
-                  className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-sm text-foreground"
+                  className="inline-flex items-center gap-2 rounded-full border border-[color:var(--palette-secondary)]/50 bg-[color:var(--palette-secondary)]/15 px-3 py-1 text-sm font-medium text-[color:var(--palette-secondary)]"
                 >
                   {email}
                   <button
                     type="button"
                     onClick={() => removeRecipient(email)}
-                    className="text-muted-foreground transition hover:text-destructive"
+                    className="text-[color:var(--palette-secondary)]/80 transition hover:text-destructive"
                     aria-label={`Eliminar ${email}`}
                   >
                     ×
@@ -236,7 +247,7 @@ export function NewDocumentView() {
         </CardContent>
       </Card>
 
-      <Card className="border-transparent">
+      <Card className="border-border/70 bg-card/80">
         <CardHeader>
           <CardTitle>Archivos adjuntos</CardTitle>
           <CardDescription>
@@ -253,10 +264,10 @@ export function NewDocumentView() {
             multiple
           />
           <div
-            className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/70 px-6 py-10 text-center"
+            className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[color:var(--palette-info)]/60 bg-[color:var(--palette-info)]/5 px-6 py-10 text-center transition hover:border-[color:var(--palette-info)]"
             onClick={() => fileInputRef.current?.click()}
           >
-            <span className="rounded-full bg-primary/10 p-3 text-primary">
+            <span className="rounded-full bg-[color:var(--palette-info)]/15 p-3 text-[color:var(--palette-info)]">
               <Upload className="size-5" />
             </span>
             <div>
@@ -265,7 +276,11 @@ export function NewDocumentView() {
                 Solo se permiten archivos PDF de hasta 10 MB.
               </p>
             </div>
-            <Button variant="secondary" type="button">
+            <Button
+              variant="secondary"
+              type="button"
+              className="border-[color:var(--palette-info)]/60 bg-[color:var(--palette-info)]/20 text-[color:var(--palette-info)] hover:bg-[color:var(--palette-info)]/30"
+            >
               Elegir archivos PDF
             </Button>
           </div>
@@ -274,7 +289,7 @@ export function NewDocumentView() {
               {attachments.map((file) => (
                 <li
                   key={`${file.name}-${file.size}`}
-                  className="flex items-center justify-between rounded-lg border border-border/70 px-3 py-2"
+                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2"
                 >
                   <span className="truncate font-medium">{file.name}</span>
                   <span className="text-muted-foreground">
@@ -291,7 +306,7 @@ export function NewDocumentView() {
         </CardContent>
       </Card>
 
-      <div className="space-y-3 rounded-2xl border bg-muted/20 p-6">
+      <div className="space-y-3 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-[var(--shadow-card)]">
         <div className="flex flex-col gap-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>
             El documento será firmado electrónicamente y se generará un código
