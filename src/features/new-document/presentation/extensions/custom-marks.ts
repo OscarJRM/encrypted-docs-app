@@ -2,6 +2,21 @@
 
 import { Mark, mergeAttributes } from "@tiptap/core";
 
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    underline: {
+      setUnderline: () => ReturnType;
+      toggleUnderline: () => ReturnType;
+      unsetUnderline: () => ReturnType;
+    };
+    highlight: {
+      setHighlight: (attributes?: Record<string, unknown>) => ReturnType;
+      toggleHighlight: () => ReturnType;
+      unsetHighlight: () => ReturnType;
+    };
+  }
+}
+
 export const UnderlineMark = Mark.create({
   name: "underline",
 
