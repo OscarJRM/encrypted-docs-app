@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,8 +8,12 @@ import {
   FileText,
   FilePlus2,
   Users,
-  Settings,
+
   ShieldCheck,
+  Send,
+  Inbox,
+  Clock4,
+  FilePenLine,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -35,18 +40,23 @@ type Role = "admin" | "user";
 
 type RoleHref = Partial<Record<Role, string>>;
 
+type MatchStrategy = "exact" | "prefix";
+
 type NavItem = {
   label: string;
   icon: LucideIcon;
   href: RoleHref;
   roles?: Role[];
   children?: NavChild[];
+  matchStrategy?: MatchStrategy;
 };
 
 type NavChild = {
   label: string;
   href: RoleHref;
   roles?: Role[];
+  matchStrategy?: MatchStrategy;
+  icon?: LucideIcon;
 };
 
 const roleLabels: Record<Role, string> = {
@@ -59,6 +69,7 @@ const navItems: NavItem[] = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: { admin: "/admin", user: "/" },
+    matchStrategy: "exact",
   },
   {
     label: "Documentos",
@@ -66,43 +77,43 @@ const navItems: NavItem[] = [
     href: { admin: "/admin/documentos", user: "/documentos" },
     children: [
       {
-        label: "En elaboración",
-        href: { admin: "/admin/documentos/en-elaboracion", user: "/documentos/en-elaboracion" },
-      },
-      {
         label: "Enviados",
-        href: { admin: "/admin/documentos/enviados", user: "/documentos/enviados" },
+        href: { admin: "/admin/documents/send", user: "/documents/sent" },
+        icon: Send,
       },
       {
         label: "Recibidos",
-        href: { admin: "/admin/documentos/recibidos", user: "/documentos/recibidos" },
+        href: { admin: "/admin/documents/received", user: "/documents/received" },
+        icon: Inbox,
       },
       {
         label: "No enviados",
-        href: { admin: "/admin/documentos/no-enviados", user: "/documentos/no-enviados" },
+        href: { admin: "/admin/documents/not-sent", user: "/documents/not-sent" },
+        icon: Clock4,
       },
       {
-        label: "Enviar documento",
-        href: { admin: "/admin/documentos/enviar", user: "/documentos/enviar" },
+        label: "Borradores",
+        href: { admin: "/admin/documents/drafts", user: "/documents/drafts" },
+        icon: FilePenLine,
       },
     ],
   },
   {
     label: "Crear documento",
     icon: FilePlus2,
-    href: { admin: "/admin/documentos/nuevo", user: "/documentos/nuevo" },
+    href: { admin: "/admin/documents/new", user: "/documentos/nuevo" },
   },
   {
     label: "Usuarios",
     icon: Users,
     href: { admin: "/admin/usuarios" },
     roles: ["admin"],
-  },
+  },/*
   {
     label: "Configuración",
     icon: Settings,
     href: { admin: "/admin/configuracion", user: "/configuracion" },
-  },
+  },*/
 ];
 
 const DEFAULT_ROLE: Role = "user";
@@ -119,16 +130,30 @@ function hasAccess(allowedRoles: Role[] | undefined, role: Role) {
   return allowedRoles.includes(role);
 }
 
-function isActivePath(pathname: string, candidate: string | undefined) {
+function isActivePath(
+  pathname: string,
+  candidate: string | undefined,
+  matchStrategy: MatchStrategy = "prefix"
+) {
   if (!candidate || candidate === "#") {
     return false;
   }
 
-  if (candidate === "/") {
-    return pathname === "/";
+  const normalizedPath = pathname.replace(/\/+$/, "") || "/";
+  const normalizedCandidate = candidate.replace(/\/+$/, "") || "/";
+
+  if (normalizedCandidate === "/") {
+    return normalizedPath === "/";
   }
 
-  return pathname.startsWith(candidate);
+  if (matchStrategy === "exact") {
+    return normalizedPath === normalizedCandidate;
+  }
+
+  return (
+    normalizedPath === normalizedCandidate ||
+    normalizedPath.startsWith(`${normalizedCandidate}/`)
+  );
 }
 
 export function AppSidebar() {
@@ -144,8 +169,15 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
-          <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md font-semibold">
-            8v
+          <div className="flex size-9 items-center justify-center">
+            <Image
+              src="/logo_encrypt.png"
+              alt="Logo 8vo"
+              width={36}
+              height={36}
+              className="size-9 rounded-md object-contain"
+              priority
+            />
           </div>
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-semibold">
@@ -168,9 +200,17 @@ export function AppSidebar() {
                   const href = resolveHref(item.href, role);
                   const hasChildren = Boolean(item.children?.length);
                   const itemIsActive =
-                    isActivePath(pathname, href) ||
+                    isActivePath(
+                      pathname,
+                      href,
+                      item.matchStrategy ?? "prefix"
+                    ) ||
                     (item.children ?? []).some((child) =>
-                      isActivePath(pathname, resolveHref(child.href, role))
+                      isActivePath(
+                        pathname,
+                        resolveHref(child.href, role),
+                        child.matchStrategy ?? "prefix"
+                      )
                     );
 
                   return (
@@ -197,9 +237,18 @@ export function AppSidebar() {
                                 <SidebarMenuSubItem key={child.label}>
                                   <SidebarMenuSubButton
                                     asChild
-                                    isActive={isActivePath(pathname, childHref)}
+                                    isActive={isActivePath(
+                                      pathname,
+                                      childHref,
+                                      child.matchStrategy ?? "prefix"
+                                    )}
                                   >
-                                    <Link href={childHref}>{child.label}</Link>
+                                    <Link href={childHref}>
+                                      {child.icon ? (
+                                        <child.icon className="size-4" />
+                                      ) : null}
+                                      <span>{child.label}</span>
+                                    </Link>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
                               );

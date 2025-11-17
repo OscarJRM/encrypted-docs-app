@@ -1,6 +1,22 @@
-  import NextAuth, { type NextAuthOptions } from "next-auth";
+  import NextAuth, { type NextAuthOptions, type DefaultSession } from "next-auth";
   import AzureAD from "next-auth/providers/azure-ad";
   import CredentialsProvider from "next-auth/providers/credentials";
+
+  declare module "next-auth" {
+    interface Session extends DefaultSession {
+      user: DefaultSession["user"] & {
+        id: string;
+        role?: string;
+      };
+    }
+  }
+
+  declare module "next-auth/jwt" {
+    interface JWT {
+      id?: string;
+      role?: string;
+    }
+  }
 
   type TestUser = {
     id: string;
