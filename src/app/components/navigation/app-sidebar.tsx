@@ -8,8 +8,12 @@ import {
   FileText,
   FilePlus2,
   Users,
-  Settings,
+
   ShieldCheck,
+  Send,
+  Inbox,
+  Clock4,
+  FilePenLine,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -52,6 +56,7 @@ type NavChild = {
   href: RoleHref;
   roles?: Role[];
   matchStrategy?: MatchStrategy;
+  icon?: LucideIcon;
 };
 
 const roleLabels: Record<Role, string> = {
@@ -72,24 +77,24 @@ const navItems: NavItem[] = [
     href: { admin: "/admin/documentos", user: "/documentos" },
     children: [
       {
-        label: "En elaboración",
-        href: { admin: "/admin/documentos/en-elaboracion", user: "/documentos/en-elaboracion" },
-      },
-      {
         label: "Enviados",
-        href: { admin: "/admin/documentos/enviados", user: "/documentos/enviados" },
+        href: { admin: "/admin/documents/send", user: "/documents/sent" },
+        icon: Send,
       },
       {
         label: "Recibidos",
-        href: { admin: "/admin/documentos/recibidos", user: "/documentos/recibidos" },
+        href: { admin: "/admin/documents/received", user: "/documents/received" },
+        icon: Inbox,
       },
       {
         label: "No enviados",
-        href: { admin: "/admin/documentos/no-enviados", user: "/documentos/no-enviados" },
+        href: { admin: "/admin/documents/not-sent", user: "/documents/not-sent" },
+        icon: Clock4,
       },
       {
-        label: "Enviar documento",
-        href: { admin: "/admin/documentos/enviar", user: "/documentos/enviar" },
+        label: "Borradores",
+        href: { admin: "/admin/documents/drafts", user: "/documents/drafts" },
+        icon: FilePenLine,
       },
     ],
   },
@@ -103,12 +108,12 @@ const navItems: NavItem[] = [
     icon: Users,
     href: { admin: "/admin/usuarios" },
     roles: ["admin"],
-  },
+  },/*
   {
     label: "Configuración",
     icon: Settings,
     href: { admin: "/admin/configuracion", user: "/configuracion" },
-  },
+  },*/
 ];
 
 const DEFAULT_ROLE: Role = "user";
@@ -238,7 +243,12 @@ export function AppSidebar() {
                                       child.matchStrategy ?? "prefix"
                                     )}
                                   >
-                                    <Link href={childHref}>{child.label}</Link>
+                                    <Link href={childHref}>
+                                      {child.icon ? (
+                                        <child.icon className="size-4" />
+                                      ) : null}
+                                      <span>{child.label}</span>
+                                    </Link>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
                               );
