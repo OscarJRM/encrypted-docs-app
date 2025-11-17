@@ -8,7 +8,6 @@ import {
   FileText,
   FilePlus2,
   Users,
-  Settings,
   ShieldCheck,
   Send,
   Inbox,
@@ -108,12 +107,12 @@ const navItems: NavItem[] = [
     icon: Users,
     href: { admin: "/admin/usuarios" },
     roles: ["admin"],
-  },
+  },/*
   {
     label: "Configuración",
     icon: Settings,
     href: { admin: "/admin/configuracion", user: "/configuracion" },
-  },
+  },*/
 ];
 
 const DEFAULT_ROLE: Role = "user";
