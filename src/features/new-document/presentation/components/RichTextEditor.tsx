@@ -166,9 +166,9 @@ export function RichTextEditor({ value, onChange, id }: RichTextEditorProps) {
     {
       label: "Resalto",
       icon: Highlighter,
-      action: () => editor?.chain().focus().toggleHighlight().run(),
+      action: () => editor?.chain().focus().toggleMark("highlight").run(),
       isActive: () => editor?.isActive("highlight"),
-      canRun: () => editor?.can().chain().focus().toggleHighlight().run(),
+      canRun: () => editor?.can().chain().focus().toggleMark("highlight").run(),
     },
     {
       label: "Encabezado grande",
