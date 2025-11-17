@@ -93,7 +93,7 @@ export function RichTextEditor({ value, onChange, id }: RichTextEditorProps) {
     if (!editor) return;
     const current = editor.getHTML();
     if (value && value !== current) {
-      editor.commands.setContent(value, false);
+      editor.commands.setContent(value, { emitUpdate: false });
     }
     if (!value && current !== "<p></p>") {
       editor.commands.clearContent();
