@@ -74,7 +74,7 @@ const navItems: NavItem[] = [
   {
     label: "Documentos",
     icon: FileText,
-    href: { admin: "/admin/documents", user: "/documents" },
+    href: { admin: "/admin/documents/inbox", user: "/documents/inbox" },
     children: [
       {
         label: "Recibidos",

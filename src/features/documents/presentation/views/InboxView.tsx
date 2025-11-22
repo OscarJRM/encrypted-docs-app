@@ -28,7 +28,8 @@ const inboxDocuments = [
     subject: "Solicitud de informe anual 2024",
     type: "oficio",
     date: "2024-05-20",
-    status: "received",
+    category: "normal",
+    read: true,
   },
   {
     id: "2",
@@ -36,7 +37,8 @@ const inboxDocuments = [
     subject: "Memorando circular sobre feriados",
     type: "memorando",
     date: "2024-05-19",
-    status: "received",
+    category: "normal",
+    read: false,
   },
   {
     id: "3",
@@ -44,7 +46,8 @@ const inboxDocuments = [
     subject: "Aprobación de presupuesto Q3",
     type: "oficio",
     date: "2024-05-18",
-    status: "read",
+    category: "cifrado",
+    read: true,
   },
 ];
 
@@ -52,21 +55,27 @@ export function InboxView() {
   return (
     <section className="space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground flex items-center gap-2">
-          <Inbox className="size-8" />
-          Bandeja de Entrada
-        </h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Gestiona y responde a los documentos oficiales y memorandos recibidos.
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex size-12 items-center justify-center rounded-lg bg-[color:var(--palette-info)]/10">
+            <Inbox className="size-6 text-[color:var(--palette-info)]" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              Documentos Recibidos
+            </h1>
+            <p className="text-muted-foreground max-w-2xl">
+              Gestiona y responde a los documentos oficiales y memorandos recibidos.
+            </p>
+          </div>
+        </div>
       </header>
 
       <Card className="border-border/70 bg-card/80">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="space-y-1">
-            <CardTitle>Documentos Recibidos</CardTitle>
+            <CardTitle>Listado de Documentos</CardTitle>
             <CardDescription>
-              Listado de comunicaciones recientes.
+              Total: {inboxDocuments.length} documentos ({inboxDocuments.filter(d => !d.read).length} sin leer)
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -89,13 +98,19 @@ export function InboxView() {
               <thead className="[&_tr]:border-b">
                 <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Remitente
+                    Estado
+                  </th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Tipo
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                     Asunto
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Tipo
+                    Remitente
+                  </th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Categoría
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                     Fecha
@@ -109,45 +124,64 @@ export function InboxView() {
                 {inboxDocuments.map((doc) => (
                   <tr
                     key={doc.id}
-                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                    className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${!doc.read ? "bg-muted/30" : ""}`}
                   >
-                    <td className="p-4 align-middle font-medium">
-                      {doc.sender}
+                    <td className="p-4 align-middle">
+                      {!doc.read && (
+                        <div className="size-2.5 rounded-full bg-[color:var(--palette-primary)]" title="No leído" />
+                      )}
                     </td>
-                    <td className="p-4 align-middle">{doc.subject}</td>
                     <td className="p-4 align-middle">
                       <Badge
-                        variant={
-                          doc.type === "oficio" ? "default" : "secondary"
-                        }
-                        className="capitalize"
+                        variant="outline"
+                        className={`capitalize ${
+                          doc.type === "oficio"
+                            ? "border-[color:var(--palette-info)] text-[color:var(--palette-info)]"
+                            : "border-[color:var(--palette-warning)] text-[color:var(--palette-warning)]"
+                        }`}
                       >
                         {doc.type}
                       </Badge>
                     </td>
-                    <td className="p-4 align-middle">{doc.date}</td>
+                    <td className={`p-4 align-middle ${!doc.read ? "font-semibold" : ""}`}>
+                      {doc.subject}
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {doc.sender}
+                    </td>
+                    <td className="p-4 align-middle">
+                      <Badge
+                        variant={doc.category === "cifrado" ? "destructive" : "success"}
+                        className="capitalize"
+                      >
+                        {doc.category}
+                      </Badge>
+                    </td>
+                    <td className="p-4 align-middle text-muted-foreground">
+                      {doc.date}
+                    </td>
                     <td className="p-4 align-middle text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-1 text-[color:var(--palette-primary)] hover:text-[color:var(--palette-primary)]"
+                          title="Ver PDF"
+                        >
+                          <Eye className="size-4" />
+                          Ver
+                        </Button>
                         {doc.type === "oficio" && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="h-8 gap-1 text-[color:var(--palette-secondary)] hover:text-[color:var(--palette-secondary)]"
                             title="Responder"
                           >
                             <Reply className="size-4" />
-                            <span className="sr-only">Responder</span>
+                            Responder
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          title="Ver PDF"
-                        >
-                          <Eye className="size-4" />
-                          <span className="sr-only">Ver PDF</span>
-                        </Button>
                       </div>
                     </td>
                   </tr>
