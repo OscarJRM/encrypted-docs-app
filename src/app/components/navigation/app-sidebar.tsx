@@ -72,27 +72,27 @@ const navItems: NavItem[] = [
     matchStrategy: "exact",
   },
   {
-    label: "Documentos",
+    label: "Documents",
     icon: FileText,
-    href: { admin: "/admin/documentos", user: "/documentos" },
+    href: { admin: "/admin/documents", user: "/documents" },
     children: [
       {
-        label: "Enviados",
-        href: { admin: "/admin/documents/send", user: "/documents/sent" },
-        icon: Send,
-      },
-      {
-        label: "Recibidos",
-        href: { admin: "/admin/documents/received", user: "/documents/received" },
+        label: "Inbox",
+        href: { admin: "/admin/documents/inbox", user: "/documents/inbox" },
         icon: Inbox,
       },
       {
-        label: "No enviados",
-        href: { admin: "/admin/documents/not-sent", user: "/documents/not-sent" },
+        label: "Sent",
+        href: { admin: "/admin/documents/sent", user: "/documents/sent" },
+        icon: Send,
+      },
+      {
+        label: "Unsent",
+        href: { admin: "/admin/documents/unsent", user: "/documents/unsent" },
         icon: Clock4,
       },
       {
-        label: "Borradores",
+        label: "Drafts",
         href: { admin: "/admin/documents/drafts", user: "/documents/drafts" },
         icon: FilePenLine,
       },
