@@ -2,9 +2,11 @@
 
 import { Button } from "@/app/components/ui/button";
 
+import { signIn } from "next-auth/react";
+
 export function MicrosoftSignInButton() {
   const signInWithMicrosoft = () => {
-    window.location.href = "/api/auth/signin/azure-ad";
+    signIn("azure-ad", { callbackUrl: "/" });
   };
 
   return (
