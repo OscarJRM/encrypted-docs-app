@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, RefreshCw, WifiOff } from "lucide-react";
+import { AlertTriangle, RefreshCw, WifiOff, Trash2 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
   Card,
@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert"; // Assuming Alert exists, otherwise I'll build it
+import { Alert, AlertDescription, AlertTitle } from "../../../../app/components/ui/alert";
 import { Badge } from "@/app/components/ui/badge";
 
 // Mock Data
@@ -103,14 +103,25 @@ export function UnsentView() {
                       {doc.error}
                     </td>
                     <td className="p-4 align-middle text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-2 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <RefreshCw className="size-3.5" />
-                        Reintentar
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-2 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <RefreshCw className="size-3.5" />
+                          Reintentar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="size-4" />
+                          <span className="sr-only">Eliminar</span>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
