@@ -74,21 +74,21 @@ const navItems: NavItem[] = [
   {
     label: "Documentos",
     icon: FileText,
-    href: { admin: "/admin/documentos", user: "/documentos" },
+    href: { admin: "/admin/documents/inbox", user: "/documents/inbox" },
     children: [
       {
-        label: "Enviados",
-        href: { admin: "/admin/documents/send", user: "/documents/sent" },
-        icon: Send,
-      },
-      {
         label: "Recibidos",
-        href: { admin: "/admin/documents/received", user: "/documents/received" },
+        href: { admin: "/admin/documents/inbox", user: "/documents/inbox" },
         icon: Inbox,
       },
       {
+        label: "Enviados",
+        href: { admin: "/admin/documents/sent", user: "/documents/sent" },
+        icon: Send,
+      },
+      {
         label: "No enviados",
-        href: { admin: "/admin/documents/not-sent", user: "/documents/not-sent" },
+        href: { admin: "/admin/documents/unsent", user: "/documents/unsent" },
         icon: Clock4,
       },
       {

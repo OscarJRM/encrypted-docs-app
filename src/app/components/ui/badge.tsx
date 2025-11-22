@@ -19,6 +19,8 @@ const badgeVariants = cva(
         info: "border-transparent bg-[color:var(--palette-info)]/20 text-[color:var(--palette-info)]",
         outline: "border-input text-muted-foreground",
         muted: "border-transparent bg-muted/60 text-muted-foreground",
+        destructive:
+          "border-transparent bg-[color:var(--palette-danger)]/15 text-[color:var(--palette-danger)] hover:bg-[color:var(--palette-danger)]/25",
       },
     },
     defaultVariants: {
