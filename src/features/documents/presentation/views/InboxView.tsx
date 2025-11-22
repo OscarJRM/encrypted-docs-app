@@ -98,9 +98,6 @@ export function InboxView() {
               <thead className="[&_tr]:border-b">
                 <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Estado
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                     Tipo
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
@@ -126,11 +123,6 @@ export function InboxView() {
                     key={doc.id}
                     className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${!doc.read ? "bg-muted/30" : ""}`}
                   >
-                    <td className="p-4 align-middle">
-                      {!doc.read && (
-                        <div className="size-2.5 rounded-full bg-[color:var(--palette-primary)]" title="No leído" />
-                      )}
-                    </td>
                     <td className="p-4 align-middle">
                       <Badge
                         variant="outline"

@@ -154,7 +154,7 @@ export function SentView() {
                       {doc.date}
                     </td>
                     <td className="p-4 align-middle">
-                      <Badge className="bg-[color:var(--palette-success)] text-[color:var(--palette-bg-dark)] hover:bg-[color:var(--palette-success)]/80">
+                      <Badge variant="success" className="capitalize">
                         {doc.status}
                       </Badge>
                     </td>
