@@ -56,8 +56,8 @@ export function InboxView() {
     <section className="space-y-8">
       <header className="space-y-2">
         <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-lg bg-[color:var(--palette-info)]/10">
-            <Inbox className="size-6 text-[color:var(--palette-info)]" />
+          <div className="flex size-12 items-center justify-center rounded-lg bg-[color:var(--palette-secondary)]/10">
+            <Inbox className="size-6 text-[color:var(--palette-secondary)]" />
           </div>
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">

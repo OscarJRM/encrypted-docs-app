@@ -51,8 +51,8 @@ export function SentView() {
     <section className="space-y-8">
       <header className="space-y-2">
         <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-lg bg-[color:var(--palette-success)]/10">
-            <Send className="size-6 text-[color:var(--palette-success)]" />
+          <div className="flex size-12 items-center justify-center rounded-lg bg-[color:var(--palette-primary)]/10">
+            <Send className="size-6 text-[color:var(--palette-primary)]" />
           </div>
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">

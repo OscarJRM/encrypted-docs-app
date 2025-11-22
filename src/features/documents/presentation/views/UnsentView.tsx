@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "../../../../app/components/ui/alert";
+
 import { Badge } from "@/app/components/ui/badge";
 
 // Mock Data
@@ -55,14 +55,22 @@ export function UnsentView() {
       </header>
 
       {unsentDocuments.length > 0 && (
-        <Alert className="border-[color:var(--palette-warning)]/50 bg-[color:var(--palette-warning)]/10 text-[color:var(--palette-warning)] [&>svg]:text-[color:var(--palette-warning)]">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Atención requerida</AlertTitle>
-          <AlertDescription>
-            Tienes {unsentDocuments.length} documentos pendientes de sincronización.
-            Verifica tu conexión a internet y vuelve a intentarlo.
-          </AlertDescription>
-        </Alert>
+        <Card className="border-[color:var(--palette-danger)]/70 bg-[color:var(--palette-danger)]/8">
+          <CardContent className="flex flex-col gap-4 pt-6 md:flex-row md:items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[color:var(--palette-danger)]/20">
+              <AlertTriangle className="h-6 w-6 text-[color:var(--palette-danger)]" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-[color:var(--palette-danger)]">
+                Atención requerida
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Tienes {unsentDocuments.length} documentos pendientes de sincronización.
+                Verifica tu conexión a internet y vuelve a intentarlo.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <Card className="border-border/70 bg-card/80">
