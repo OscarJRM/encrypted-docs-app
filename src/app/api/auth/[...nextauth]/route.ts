@@ -7,6 +7,7 @@
       user: DefaultSession["user"] & {
         id: string;
         role?: string;
+        accessToken?: string;
       };
     }
   }
@@ -15,6 +16,7 @@
     interface JWT {
       id?: string;
       role?: string;
+      accessToken?: string;
     }
   }
 
@@ -98,10 +100,14 @@
       signIn: "/login",
     },
     callbacks: {
-      async jwt({ token, user }) {
+      async jwt({ token, user, account }) {
         if (user) {
           token.id = (user as TestUser).id;
           token.role = (user as TestUser).role;
+        }
+        // Persist the OAuth access_token to the token right after signin
+        if (account && account.access_token) {
+          token.accessToken = account.access_token;
         }
         return token;
       },
@@ -109,6 +115,8 @@
         if (session.user) {
           session.user.id = token.id as string;
           (session.user as typeof session.user & { role?: string }).role = token.role as string;
+          // Pass access token to the client
+          session.user.accessToken = token.accessToken as string;
         }
         return session;
       },
