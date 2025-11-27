@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 
 export function MicrosoftSignInButton() {
   const signInWithMicrosoft = () => {
-    signIn("azure-ad", { callbackUrl: "/" });
+    signIn("azure-ad", { callbackUrl: "/auth/microsoft/callback" });
   };
 
   return (
