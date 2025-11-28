@@ -106,7 +106,7 @@ const navItems: NavItem[] = [
   {
     label: "Usuarios",
     icon: Users,
-    href: { admin: "/admin/usuarios" },
+    href: { admin: "/admin/users" },
     roles: ["admin"],
   },/*
   {
