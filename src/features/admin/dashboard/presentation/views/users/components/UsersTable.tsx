@@ -29,6 +29,9 @@ export function UsersTable({
               Correo
             </th>
             <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+              Cédula
+            </th>
+            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
               Rol
             </th>
             <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
@@ -54,6 +57,12 @@ export function UsersTable({
               <td className="p-4 align-middle font-medium">{user.nombre}</td>
               <td className="p-4 align-middle text-muted-foreground">
                 {user.email}
+              </td>
+              {/* ✅ MOSTRAR CÉDULA */}
+              <td className="p-4 align-middle text-muted-foreground">
+                {user.cedula || (
+                  <span className="text-xs italic opacity-50">Sin cédula</span>
+                )}
               </td>
               <td className="p-4 align-middle">
                 <Badge

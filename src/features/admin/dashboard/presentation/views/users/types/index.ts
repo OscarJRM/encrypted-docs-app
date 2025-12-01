@@ -2,6 +2,7 @@ export interface User {
     id: string;
     nombre: string;
     email: string;
+    cedula?: string;
     rol: string;
     permisoLectura: boolean;
     permisoEscritura: boolean;
@@ -29,6 +30,7 @@ export interface User {
   export interface UserFormData {
     nombre: string;
     email: string;
+    cedula?: string;
     rol: string;
     permisoLectura: boolean;
     permisoEscritura: boolean;

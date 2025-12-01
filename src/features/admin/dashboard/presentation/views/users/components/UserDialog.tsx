@@ -1,3 +1,4 @@
+// src/features/admin/dashboard/presentation/views/users/components/UserDialog.tsx
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -67,7 +68,7 @@ export function UserDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="email" style={{ color: "var(--text)" }}>
-                Correo Institucional *
+              Correo Electrónico *
               </Label>
               <Input
                 id="email"
@@ -76,7 +77,7 @@ export function UserDialog({
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                placeholder="usuario@uta.edu.ec"
+                placeholder="usuario@ejemplo.com"
                 style={{
                   backgroundColor: "var(--bg)",
                   borderColor: "var(--border)",
@@ -84,6 +85,30 @@ export function UserDialog({
                 }}
               />
             </div>
+          </div>
+
+          {/* Campo de Cédula - Obligatorio en creación, opcional en edición */}
+          <div className="space-y-2">
+            <Label htmlFor="cedula" style={{ color: "var(--text)" }}>
+              Cédula {!editingUser && "*"}
+            </Label>
+            <Input
+              id="cedula"
+              value={formData.cedula || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, cedula: e.target.value })
+              }
+              placeholder="1234567890"
+              maxLength={10}
+              style={{
+                backgroundColor: "var(--bg)",
+                borderColor: "var(--border)",
+                color: "var(--text)",
+              }}
+            />
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {!editingUser && "Campo obligatorio para nuevos usuarios"}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -157,10 +182,9 @@ export function UserDialog({
             <Label
               htmlFor="clavePDF"
               className="flex items-center gap-2"
-              style={{ color: "var(--text)" }}
-            >
+              style={{ color: "var(--text)" }}>
               <Key className="w-4 h-4" />
-              Clave para PDF (Opcional)
+              Contraseña {!editingUser && "*"}
             </Label>
             <div className="relative">
               <Input
@@ -170,7 +194,11 @@ export function UserDialog({
                 onChange={(e) =>
                   setFormData({ ...formData, clavePDF: e.target.value })
                 }
-                placeholder="Ingrese una clave segura para proteger PDFs"
+                placeholder={
+                  editingUser
+                    ? "Dejar vacío para mantener la actual"
+                    : "Mínimo 6 caracteres"
+                }
                 className="pr-10"
                 style={{
                   backgroundColor: "var(--bg)",
@@ -202,8 +230,9 @@ export function UserDialog({
               </Button>
             </div>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Esta clave se usará para cifrar los documentos PDF físicos que
-              genere el usuario
+              {editingUser
+                ? "Dejar vacío para no cambiar la contraseña actual"
+                : "Campo obligatorio - Mínimo 6 caracteres"}
             </p>
           </div>
         </div>
