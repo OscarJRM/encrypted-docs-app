@@ -1,0 +1,33 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const isLoggedIn = !!token;
+  const isAuthPage = 
+    req.nextUrl.pathname.startsWith("/login") || 
+    req.nextUrl.pathname.startsWith("/forgot-password") || 
+    req.nextUrl.pathname.startsWith("/reset-password");
+
+  const hasTokenParam = req.nextUrl.searchParams.has("token");
+
+  if (isAuthPage && isLoggedIn) {
+    if (req.nextUrl.pathname.startsWith("/reset-password")) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
+  }
+
+  if (!isAuthPage && !isLoggedIn && !hasTokenParam) {
+    return NextResponse.redirect(new URL("/login", req.nextUrl.origin));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    "/((?!api|backend-api|_next/static|_next/image|favicon.ico|logo_encrypt\\.png).*)",
+  ],
+};

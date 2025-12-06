@@ -6,11 +6,11 @@ import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
 
 export interface EmailPasswordFormProps {
-  onSubmit?: (data: { email: string; password: string }) => Promise<void> | void;
+  onSubmit?: (data: { cedula: string; password: string }) => Promise<void> | void;
 }
 
 export function EmailPasswordForm({ onSubmit }: EmailPasswordFormProps) {
-  const [email, setEmail] = useState("");
+  const [cedula, setCedula] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +18,7 @@ export function EmailPasswordForm({ onSubmit }: EmailPasswordFormProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      await onSubmit?.({ email, password });
+      await onSubmit?.({ cedula, password });
     } finally {
       setLoading(false);
     }
@@ -27,13 +27,13 @@ export function EmailPasswordForm({ onSubmit }: EmailPasswordFormProps) {
   return (
     <form className="grid gap-4" onSubmit={handleSubmit}>
       <div className="grid gap-2">
-        <Label htmlFor="email">Correo</Label>
+        <Label htmlFor="cedula">Cédula</Label>
         <Input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          id="cedula"
+          type="text"
+          placeholder="Ingrese su cédula"
+          value={cedula}
+          onChange={(e) => setCedula(e.target.value)}
           required
         />
       </div>
