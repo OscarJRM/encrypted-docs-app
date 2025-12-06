@@ -6,7 +6,8 @@ import { signIn } from "next-auth/react";
 
 export function MicrosoftSignInButton() {
   const handleMicrosoftLogin = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    console.log("[MicrosoftSignInButton] Redirecting to:", `${apiUrl}/auth/azure/login`);
     window.location.href = `${apiUrl}/auth/azure/login`;
   };
 

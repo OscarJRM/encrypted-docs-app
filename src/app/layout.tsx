@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "./components/SessionProvider";
 import { ThemeInitializer } from "./components/ThemeInitializer";
+import { Suspense } from "react";
+import { AuthTokenHandler } from "@/features/auth/presentation/components/AuthTokenHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +37,9 @@ export default function RootLayout({
       >
         <ThemeInitializer />
         <SessionProvider>
+          <Suspense fallback={null}>
+            <AuthTokenHandler />
+          </Suspense>
           {children}
         </SessionProvider>
       </body>
