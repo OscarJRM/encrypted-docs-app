@@ -19,6 +19,11 @@ export function AuthTokenHandler() {
     });
 
     if (token) {
+      // Don't consume the token if we are on the reset-password page
+      if (window.location.pathname.startsWith("/reset-password")) {
+        return;
+      }
+
       if (status === "unauthenticated") {
         console.log("[AuthTokenHandler] Token found and user unauthenticated. Attempting login...");
         
