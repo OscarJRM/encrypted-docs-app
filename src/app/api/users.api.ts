@@ -1,5 +1,6 @@
 // src/app/api/users.api.ts
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Use relative path to leverage Next.js rewrites and avoid CORS
+const API_URL = '/backend-api';
 
 export interface User {
   id: string;
