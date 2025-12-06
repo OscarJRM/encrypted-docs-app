@@ -1,9 +1,11 @@
 // src/features/admin/dashboard/presentation/views/users/hooks/useUsers.ts
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { usersApi } from "@/app/api/users.api";
 import { User, UserFormData } from "../types";
 
 export function useUsers() {
+  const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,15 +24,18 @@ export function useUsers() {
 
   // Cargar usuarios del backend al iniciar
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (session?.user) {
+      fetchUsers();
+    }
+  }, [session]);
 
   // Función para obtener usuarios del backend
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await usersApi.getAll();
+      const token = (session?.user as any)?.accessToken;
+      const data = await usersApi.getAll(token);
       
       // Adaptar datos del backend a tu estructura
       const adaptedUsers: User[] = data.map((user) => ({
@@ -150,8 +155,9 @@ export function useUsers() {
         if (formData.clavePDF) updateData.password = formData.clavePDF;
         
         updateData.role = formData.rol === 'Administrador' ? 'admin' : 'user';
-  
-        await usersApi.update(editingUser.id, updateData);
+        
+        const token = (session?.user as any)?.accessToken;
+        await usersApi.update(editingUser.id, updateData, token);
         
         alert('Usuario actualizado correctamente');
       } else {
@@ -164,7 +170,8 @@ export function useUsers() {
           role: formData.rol === 'Administrador' ? 'admin' : 'user',
         };
   
-        await usersApi.create(createData);
+        const token = (session?.user as any)?.accessToken;
+        await usersApi.create(createData, token);
         
         alert('Usuario creado correctamente');
       }
@@ -193,7 +200,8 @@ export function useUsers() {
     setError(null);
 
     try {
-      await usersApi.delete(id);
+      const token = (session?.user as any)?.accessToken;
+      await usersApi.delete(id, token);
       setUsers(users.filter((u) => u.id !== id));
       alert('Usuario eliminado correctamente');
     } catch (err) {

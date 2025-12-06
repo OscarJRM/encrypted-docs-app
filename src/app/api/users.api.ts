@@ -49,13 +49,13 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
 };
 
 // Función para obtener headers con autenticación
-const getAuthHeaders = () => {
-  if (typeof window === 'undefined') return { 'Content-Type': 'application/json' };
+const getAuthHeaders = (token?: string) => {
+  if (typeof window === 'undefined' && !token) return { 'Content-Type': 'application/json' };
   
-  const token = localStorage.getItem('token');
+  const finalToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
   return {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...(finalToken && { 'Authorization': `Bearer ${finalToken}` }),
   };
 };
 
@@ -64,10 +64,10 @@ export const usersApi = {
   /**
    * GET /users - Obtener todos los usuarios (masked)
    */
-  getAll: async (): Promise<User[]> => {
+  getAll: async (token?: string): Promise<User[]> => {
     const response = await fetch( `${API_URL}/users`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(token),
     });
 
     return handleResponse<User[]>(response);
@@ -76,10 +76,10 @@ export const usersApi = {
   /**
    * GET /users/:id - Obtener un usuario por ID (clear text for admin)
    */
-  getById: async (id: string): Promise<User> => {
+  getById: async (id: string, token?: string): Promise<User> => {
     const response = await fetch(`${API_URL}/users/${id}`, {
       method: 'GET',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(token),
     });
 
     return handleResponse<User>(response);
@@ -88,10 +88,10 @@ export const usersApi = {
   /**
    * POST /users - Crear un nuevo usuario
    */
-  create: async (data: CreateUserDto): Promise<User> => {
+  create: async (data: CreateUserDto, token?: string): Promise<User> => {
     const response = await fetch(`${API_URL}/users`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(token),
       body: JSON.stringify(data),
     });
 
@@ -101,10 +101,10 @@ export const usersApi = {
   /**
    * PATCH /users/:id - Actualizar un usuario
    */
-  update: async (id: string, data: UpdateUserDto): Promise<User> => {
+  update: async (id: string, data: UpdateUserDto, token?: string): Promise<User> => {
     const response = await fetch(`${API_URL}/users/${id}`, {
       method: 'PATCH',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(token),
       body: JSON.stringify(data),
     });
 
@@ -114,10 +114,10 @@ export const usersApi = {
   /**
    * DELETE /users/:id - Eliminar un usuario
    */
-  delete: async (id: string): Promise<void> => {
+  delete: async (id: string, token?: string): Promise<void> => {
     const response = await fetch(`${API_URL}/users/${id}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders(token),
     });
 
     return handleResponse<void>(response);
