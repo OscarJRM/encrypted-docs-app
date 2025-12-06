@@ -1,102 +1,71 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
-import { Loader2, Check, Copy } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export function MicrosoftCallback() {
-  const { data: session, status } = useSession();
   const router = useRouter();
-  const [copied, setCopied] = useState(false);
+  const searchParams = useSearchParams();
+  const { status } = useSession();
+  const [error, setError] = useState("");
 
-  const accessToken = session?.user?.accessToken;
+  useEffect(() => {
+    const token = searchParams.get("token");
 
-  const handleCopy = () => {
-    if (accessToken) {
-      navigator.clipboard.writeText(accessToken);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    if (token) {
+      // Attempt to sign in with the token
+      signIn("credentials", {
+        token,
+        redirect: false,
+      }).then((result) => {
+        if (result?.error) {
+          setError("Error al iniciar sesión con el token proporcionado.");
+        } else {
+          router.push("/");
+          router.refresh();
+        }
+      });
+    } else if (status === "unauthenticated") {
+      setError("No se encontró el token de autenticación.");
+    } else if (status === "authenticated") {
+        router.push("/");
     }
-  };
+  }, [searchParams, router, status]);
 
-  const handleContinue = () => {
-    router.push("/");
-  };
-
-  if (status === "loading") {
+  if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-red-500">Error de Autenticación</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.push("/login")} variant="outline" className="w-full">
+              Volver al Login
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <Card className="w-full max-w-md mx-auto mt-10">
-        <CardHeader>
-          <CardTitle className="text-red-500">Error de Autenticación</CardTitle>
-          <CardDescription>No se pudo obtener la sesión de Microsoft.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={() => router.push("/login")} variant="outline">
-            Volver al Login
-          </Button>
-        </CardContent>
-      </Card>
     );
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-green-600 flex items-center gap-2">
-            <Check className="h-6 w-6" />
-            Autenticación Exitosa
+          <CardTitle className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            Autenticando...
           </CardTitle>
           <CardDescription>
-            Has iniciado sesión correctamente con Microsoft.
+            Estamos verificando tus credenciales de Microsoft.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium text-sm text-slate-700">Microsoft Access Token (Para Backend)</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className="h-8 text-xs"
-              >
-                {copied ? (
-                  <span className="flex items-center text-green-600">
-                    <Check className="h-3 w-3 mr-1" /> Copiado
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    <Copy className="h-3 w-3 mr-1" /> Copiar Token
-                  </span>
-                )}
-              </Button>
-            </div>
-            <div className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono break-all max-h-48 overflow-y-auto">
-              {accessToken || "No access token found in session"}
-            </div>
-            <p className="text-xs text-slate-500 mt-2">
-              Usa este token en el header `Authorization: Bearer &lt;token&gt;` para probar tus endpoints de NestJS.
-            </p>
-          </div>
-
-          <div className="flex justify-end gap-3">
-             <Button onClick={handleContinue}>
-              Continuar al Dashboard
-            </Button>
-          </div>
-        </CardContent>
       </Card>
     </div>
   );

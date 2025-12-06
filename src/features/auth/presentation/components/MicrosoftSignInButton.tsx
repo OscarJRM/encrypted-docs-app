@@ -5,12 +5,13 @@ import { Button } from "@/app/components/ui/button";
 import { signIn } from "next-auth/react";
 
 export function MicrosoftSignInButton() {
-  const signInWithMicrosoft = () => {
-    signIn("azure-ad", { callbackUrl: "/auth/microsoft/callback" });
+  const handleMicrosoftLogin = () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    window.location.href = `${apiUrl}/auth/azure/login`;
   };
 
   return (
-    <Button type="button" variant="outline" className="w-full" onClick={signInWithMicrosoft}>
+    <Button type="button" variant="outline" className="w-full" onClick={handleMicrosoftLogin}>
       <MicrosoftIcon className="mr-2" />
       Continuar con Microsoft
     </Button>

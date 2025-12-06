@@ -1,128 +1,114 @@
-  import NextAuth, { type NextAuthOptions, type DefaultSession } from "next-auth";
-  import AzureAD from "next-auth/providers/azure-ad";
-  import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth, { type NextAuthOptions, type DefaultSession } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import axios from "axios";
 
-  declare module "next-auth" {
-    interface Session extends DefaultSession {
-      user: DefaultSession["user"] & {
-        id: string;
-        role?: string;
-        accessToken?: string;
-      };
-    }
-  }
-
-  declare module "next-auth/jwt" {
-    interface JWT {
-      id?: string;
+declare module "next-auth" {
+  interface Session extends DefaultSession {
+    user: DefaultSession["user"] & {
+      id: string;
       role?: string;
       accessToken?: string;
-    }
+    };
   }
 
-  type TestUser = {
+  interface User {
     id: string;
-    email: string;
-    password: string;
-    name: string;
-    role: "admin" | "user";
-  };
-
-  const TEST_USERS: TestUser[] = [
-    {
-      id: "admin",
-      email: "admin@example.com",
-      password: "admin123",
-      name: "Administrador",
-      role: "admin",
-    },
-    {
-      id: "user",
-      email: "user@example.com",
-      password: "user123",
-      name: "Cliente",
-      role: "user",
-    },
-  ];
-
-  const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET ?? "dev-only-nextauth-secret";
-
-  if (!process.env.NEXTAUTH_SECRET) {
-    process.env.NEXTAUTH_SECRET = NEXTAUTH_SECRET;
+    role?: string;
+    accessToken?: string;
   }
+}
 
-  if (!process.env.NEXTAUTH_URL && process.env.NODE_ENV === "development") {
-    process.env.NEXTAUTH_URL = "http://localhost:3000";
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: string;
+    accessToken?: string;
   }
+}
 
-  export const authConfig: NextAuthOptions = {
-    secret: NEXTAUTH_SECRET,
-    providers: [
-      CredentialsProvider({
-        name: "Credentials",
-        credentials: {
-          email: { label: "Email", type: "email" },
-          password: { label: "Password", type: "password" }
-        },
-        async authorize(credentials) {
-          if (!credentials?.email || !credentials?.password) {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "dev-only-nextauth-secret";
+
+export const authConfig: NextAuthOptions = {
+  secret: NEXTAUTH_SECRET,
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        cedula: { label: "Cédula", type: "text" },
+        password: { label: "Contraseña", type: "password" },
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        try {
+          let accessToken = null;
+
+          // Scenario 1: Login with Token (from Microsoft Callback)
+          if (credentials?.token) {
+            accessToken = credentials.token;
+          } 
+          // Scenario 2: Login with Cedula/Password
+          else if (credentials?.cedula && credentials?.password) {
+            const response = await axios.post(`${API_URL}/auth/login`, {
+              cedula: credentials.cedula,
+              password: credentials.password,
+            });
+            // Handle different possible response structures
+            accessToken = response.data?.accessToken || response.data?.access_token || response.data?.token;
+          }
+
+          if (!accessToken) {
             return null;
           }
 
-          const normalizedEmail = credentials.email.toLowerCase();
-
-          const user = TEST_USERS.find(
-            ({ email, password }) => email === normalizedEmail && password === credentials.password,
-          );
-
-          if (!user) {
-            return null;
+          // Decode JWT to get user info
+          // We use Buffer to decode the base64 payload of the JWT
+          const parts = accessToken.split('.');
+          if (parts.length !== 3) {
+            throw new Error("Invalid JWT format");
           }
+          
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
 
-          const { password, ...userWithoutPassword } = user;
-          return userWithoutPassword;
-        },
-      }),
-      ...(process.env.AZURE_AD_CLIENT_ID && 
-          process.env.AZURE_AD_CLIENT_SECRET && 
-          process.env.AZURE_AD_TENANT_ID
-        ? [
-            AzureAD({
-              clientId: process.env.AZURE_AD_CLIENT_ID,
-              clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
-              tenantId: process.env.AZURE_AD_TENANT_ID,
-            }),
-          ]
-        : []),
-    ],
-    session: { strategy: "jwt" },
-    pages: {
-      signIn: "/login",
-    },
-    callbacks: {
-      async jwt({ token, user, account }) {
-        if (user) {
-          token.id = (user as TestUser).id;
-          token.role = (user as TestUser).role;
+          return {
+            id: payload.sub || payload.id || "unknown",
+            name: payload.name || payload.email || "User",
+            email: payload.email,
+            role: payload.role || "user",
+            accessToken: accessToken,
+          };
+
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
         }
-        // Persist the OAuth access_token to the token right after signin
-        if (account && account.access_token) {
-          token.accessToken = account.access_token;
-        }
-        return token;
       },
-      async session({ session, token }) {
-        if (session.user) {
-          session.user.id = token.id as string;
-          (session.user as typeof session.user & { role?: string }).role = token.role as string;
-          // Pass access token to the client
-          session.user.accessToken = token.accessToken as string;
-        }
-        return session;
-      },
+    }),
+  ],
+  session: { strategy: "jwt" },
+  pages: {
+    signIn: "/login",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.accessToken = user.accessToken;
+      }
+      return token;
     },
-  };
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.accessToken = token.accessToken as string;
+      }
+      return session;
+    },
+  },
+};
 
-  const handler = NextAuth(authConfig);
+const handler = NextAuth(authConfig);
 
-  export { handler as GET, handler as POST };
+export { handler as GET, handler as POST };
