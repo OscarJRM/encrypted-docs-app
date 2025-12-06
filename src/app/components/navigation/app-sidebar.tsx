@@ -101,7 +101,7 @@ const navItems: NavItem[] = [
   {
     label: "Crear documento",
     icon: FilePlus2,
-    href: { admin: "/admin/documents/new", user: "/documentos/nuevo" },
+    href: { admin: "/admin/documents/new", user: "/documents/new" },
   },
   {
     label: "Usuarios",
