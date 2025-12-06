@@ -26,7 +26,7 @@ declare module "next-auth/jwt" {
   }
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "dev-only-nextauth-secret";
 
 export const authConfig: NextAuthOptions = {
@@ -69,14 +69,20 @@ export const authConfig: NextAuthOptions = {
           }
           
           const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+          
+          console.log("[NextAuth] Decoded JWT payload:", payload);
 
-          return {
+          const user = {
             id: payload.sub || payload.id || "unknown",
-            name: payload.name || payload.email || "User",
-            email: payload.email,
+            name: payload.name || payload.username || payload.email || "User",
+            email: payload.email || payload.username,
             role: payload.role || "user",
             accessToken: accessToken,
           };
+
+          console.log("[NextAuth] Authorized user:", user);
+
+          return user;
 
         } catch (error) {
           console.error("Auth error:", error);
