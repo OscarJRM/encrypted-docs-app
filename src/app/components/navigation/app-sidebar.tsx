@@ -166,7 +166,7 @@ export function AppSidebar() {
   const displayName = session?.user?.name ?? "Invitado";
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
           <div className="flex size-9 items-center justify-center">
@@ -179,7 +179,7 @@ export function AppSidebar() {
               priority
             />
           </div>
-          <div className="flex min-w-0 flex-col">
+          <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
             <span className="truncate text-sm font-semibold">
               {displayName}
             </span>
@@ -218,7 +218,32 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={itemIsActive && !hasChildren}
-                        tooltip={item.label}
+                        tooltip={{
+                          children: hasChildren ? (
+                            <div className="flex flex-col gap-1 min-w-[160px] p-1">
+                              <div className="font-semibold px-2 py-1.5 text-xs text-muted-foreground border-b mb-1">
+                                {item.label}
+                              </div>
+                              {item.children
+                                ?.filter((child) => hasAccess(child.roles, role))
+                                .map((child) => (
+                                  <Link
+                                    key={child.label}
+                                    href={resolveHref(child.href, role)}
+                                    className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-sm text-sm transition-colors"
+                                  >
+                                    {child.icon && <child.icon className="size-3.5" />}
+                                    <span>{child.label}</span>
+                                  </Link>
+                                ))}
+                            </div>
+                          ) : (
+                            item.label
+                          ),
+                          className: hasChildren
+                            ? "bg-popover text-popover-foreground border shadow-lg p-0 [&>svg]:hidden"
+                            : undefined,
+                        }}
                       >
                         <Link href={href}>
                           <item.icon className="size-4" />
