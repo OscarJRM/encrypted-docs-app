@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Upload,
   UserPlus,
+  Lock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -25,6 +26,7 @@ import {
   type SelectableCardAccent,
 } from "../components/SelectableCard";
 import { RichTextEditor } from "../components/RichTextEditor";
+import { useCreateDocument } from "../../hooks/useCreateDocument";
 
 type DocumentType = "oficio" | "memorando";
 type Category = "normal" | "cifrado";
@@ -76,10 +78,12 @@ const categoryOptions: Array<{
 ];
 
 export function NewDocumentView() {
+  const { createAndSendDocument, loading } = useCreateDocument();
   const [documentType, setDocumentType] = useState<DocumentType>("oficio");
   const [category, setCategory] = useState<Category>("normal");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [pdfPassword, setPdfPassword] = useState("");
   const [recipientInput, setRecipientInput] = useState("");
   const [recipients, setRecipients] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -104,6 +108,26 @@ export function NewDocumentView() {
     const files = event.target.files;
     if (!files) return;
     setAttachments(Array.from(files));
+  };
+
+  const handleCreateDocument = async () => {
+    if (!subject || !content) {
+      alert("Por favor completa el asunto y el contenido.");
+      return;
+    }
+    if (recipients.length === 0) {
+      alert("Debes agregar al menos un destinatario.");
+      return;
+    }
+
+    await createAndSendDocument(
+      subject,
+      content,
+      category,
+      documentType,
+      recipients,
+      pdfPassword || undefined
+    );
   };
 
   return (
@@ -183,6 +207,22 @@ export function NewDocumentView() {
               onChange={(event) => setSubject(event.target.value)}
             />
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="pdfPassword">Contraseña del PDF (Opcional)</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="pdfPassword"
+                type="password"
+                placeholder="Protege el documento con una contraseña"
+                className="pl-9"
+                value={pdfPassword}
+                onChange={(event) => setPdfPassword(event.target.value)}
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="content">Contenido del documento</Label>
             <RichTextEditor value={content} onChange={setContent} />
@@ -313,8 +353,10 @@ export function NewDocumentView() {
             QR para validar su autenticidad antes del envío.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button variant="outline">Guardar borrador</Button>
-            <Button>Firmar y enviar documento</Button>
+            <Button variant="outline" disabled={loading}>Guardar borrador</Button>
+            <Button onClick={handleCreateDocument} disabled={loading}>
+              {loading ? "Enviando..." : "Firmar y enviar documento"}
+            </Button>
           </div>
         </div>
       </div>
