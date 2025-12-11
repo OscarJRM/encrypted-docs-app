@@ -135,7 +135,8 @@ export function NewDocumentView() {
       category,
       documentType,
       selectedRecipients.map((u) => u.id),
-      pdfPassword || undefined
+      attachments,
+      pdfPassword
     );
   };
 
