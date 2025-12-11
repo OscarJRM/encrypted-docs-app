@@ -81,7 +81,7 @@ const categoryOptions: Array<{
 
 
 export function NewDocumentView() {
-  const { createAndSendDocument, loading, availableUsers } = useCreateDocument();
+  const { saveDraft, sendDocument, loading, availableUsers } = useCreateDocument();
   const [documentType, setDocumentType] = useState<DocumentType>("oficio");
   const [category, setCategory] = useState<Category>("normal");
   const [subject, setSubject] = useState("");
@@ -119,17 +119,43 @@ export function NewDocumentView() {
     setAttachments(Array.from(files));
   };
 
-  const handleCreateDocument = async () => {
+  const validateForm = () => {
     if (!subject || !content) {
       alert("Por favor completa el asunto y el contenido.");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleSaveDraft = async () => {
+    if (!validateForm()) return;
+
+    try {
+      await saveDraft(
+        subject,
+        content,
+        category,
+        documentType,
+        selectedRecipients.map((u) => u.id),
+        attachments,
+        pdfPassword
+      );
+      alert("Borrador guardado correctamente.");
+    } catch (error) {
+      // Error is already logged in hook
+      alert("Error al guardar el borrador.");
+    }
+  };
+
+  const handleSendDocument = async () => {
+    if (!validateForm()) return;
+    
     if (selectedRecipients.length === 0) {
-      alert("Debes agregar al menos un destinatario.");
+      alert("Debes agregar al menos un destinatario para enviar.");
       return;
     }
 
-    await createAndSendDocument(
+    await sendDocument(
       subject,
       content,
       category,
@@ -378,9 +404,9 @@ export function NewDocumentView() {
             QR para validar su autenticidad antes del envío.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button variant="outline" disabled={loading}>Guardar borrador</Button>
-            <Button onClick={handleCreateDocument} disabled={loading}>
-              {loading ? "Enviando..." : "Firmar y enviar documento"}
+            <Button variant="outline" onClick={handleSaveDraft} disabled={loading}>Guardar borrador</Button>
+            <Button onClick={handleSendDocument} disabled={loading}>
+              {loading ? "Procesando..." : "Firmar y enviar documento"}
             </Button>
           </div>
         </div>
