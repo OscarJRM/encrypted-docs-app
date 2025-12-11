@@ -1,6 +1,6 @@
 "use client";
 
-import { Send, Eye, Search, Filter } from "lucide-react";
+import { Send, Eye, Search, Filter, Reply } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
   Card,
@@ -131,7 +131,15 @@ export function SentView() {
                       </td>
                       <td className="p-4 align-middle">
                         <div className="flex flex-col">
-                          <span>{doc.title}</span>
+                          <div className="flex items-center gap-2">
+                            {doc.title.startsWith("Re:") && (
+                              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                                <Reply className="mr-1 size-3" />
+                                Respuesta
+                              </Badge>
+                            )}
+                            <span>{doc.title}</span>
+                          </div>
                           <span className="text-xs text-muted-foreground font-mono">{doc.id.substring(0, 8)}</span>
                         </div>
                       </td>

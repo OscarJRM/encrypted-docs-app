@@ -129,7 +129,15 @@ export function InboxView() {
                         </Badge>
                       </td>
                       <td className="p-4 align-middle font-medium">
-                        {doc.title}
+                        <div className="flex items-center gap-2">
+                          {doc.title.startsWith("Re:") && (
+                            <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                              <Reply className="mr-1 size-3" />
+                              Respuesta
+                            </Badge>
+                          )}
+                          {doc.title}
+                        </div>
                       </td>
                       <td className="p-4 align-middle text-muted-foreground">
                         {doc.sender?.name || doc.sender?.email || 'Desconocido'}

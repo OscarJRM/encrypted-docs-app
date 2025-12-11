@@ -63,6 +63,11 @@ export function useDocuments(type: 'inbox' | 'outbox' | 'drafts') {
           data = await documentService.getDrafts();
           break;
       }
+      // Sort by date descending (newest first)
+      if (Array.isArray(data)) {
+        data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      }
+
       // Ensure data is an array
       setDocuments(Array.isArray(data) ? data : []);
     } catch (err) {
