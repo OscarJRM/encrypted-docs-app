@@ -1,18 +1,74 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { documentService, Document } from "@/features/new-document/services/document.service";
+import { documentService } from "@/features/new-document/services/document.service";
 import { usersApi, User } from "@/app/api/users.api";
 import { useSession } from "next-auth/react";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { SelectableCard } from "@/features/new-document/presentation/components/SelectableCard";
+import { SelectableCard, SelectableCardAccent } from "@/features/new-document/presentation/components/SelectableCard";
 import { RichTextEditor } from "@/features/new-document/presentation/components/RichTextEditor";
-import { Badge } from "@/app/components/ui/badge";
-import { FileText, Shield, Lock, Send, Save, X, Search, Paperclip, Trash2 } from "lucide-react";
+import { 
+  FileText, 
+  PenLine, 
+  ShieldCheck, 
+  Upload, 
+  UserPlus, 
+  Lock 
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+type DocumentType = "oficio" | "memorando";
+type Category = "normal" | "cifrado";
+
+const documentTypeOptions: Array<{
+  id: DocumentType;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  accent: SelectableCardAccent;
+}> = [
+  {
+    id: "oficio",
+    title: "Oficio",
+    description: "Comunicados formales entre instituciones o entes externos.",
+    icon: FileText,
+    accent: "primary",
+  },
+  {
+    id: "memorando",
+    title: "Memorando",
+    description: "Notas internas para equipos o áreas específicas.",
+    icon: PenLine,
+    accent: "info",
+  },
+];
+
+const categoryOptions: Array<{
+  id: Category;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  accent: SelectableCardAccent;
+}> = [
+  {
+    id: "normal",
+    title: "Normal",
+    description: "Documento visible para los destinatarios sin cifrado.",
+    icon: UserPlus,
+    accent: "success",
+  },
+  {
+    id: "cifrado",
+    title: "Cifrado",
+    description: "Protección avanzada con acceso restringido y seguimiento.",
+    icon: ShieldCheck,
+    accent: "secondary",
+  },
+];
 
 interface EditDocumentViewProps {
   documentId: string;
@@ -25,17 +81,19 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
   // Form State
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("normal");
-  const [docType, setDocType] = useState("oficio");
+  const [category, setCategory] = useState<Category>("normal");
+  const [docType, setDocType] = useState<DocumentType>("oficio");
   const [pdfPassword, setPdfPassword] = useState("");
   
   // Recipients State
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipients, setSelectedRecipients] = useState<User[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
-  // Attachments State (Note: API might not support removing existing attachments easily, so we focus on adding new ones)
+  // Attachments State
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // UI State
   const [loading, setLoading] = useState(true);
@@ -57,11 +115,10 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
         if (doc) {
           setTitle(doc.title);
           setContent(doc.content);
-          setCategory(doc.category?.toLowerCase() || "normal");
-          setDocType(doc.doc_type?.toLowerCase() || "oficio");
-          // Note: We can't retrieve the PDF password or existing recipients easily in a way to populate the form exactly as 'new' 
-          // unless the API provides them. For drafts, we assume we can add *more* recipients.
-          // If the API returns recipients, we could map them back to selectedRecipients if we have their IDs.
+          setCategory((doc.category?.toLowerCase() as Category) || "normal");
+          setDocType((doc.doc_type?.toLowerCase() as DocumentType) || "oficio");
+          // Note: Existing recipients are not easily editable via this flow yet, 
+          // but we can add new ones.
         }
       } catch (error) {
         console.error("Error loading draft:", error);
@@ -76,6 +133,11 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
 
   // Handlers
   const handleSave = async () => {
+    if (!title || !content) {
+      alert("Por favor completa el asunto y el contenido.");
+      return;
+    }
+
     setSaving(true);
     try {
       await documentService.update(documentId, {
@@ -109,7 +171,7 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
         setSelectedRecipients([]); // Clear after adding
       }
 
-      alert("Borrador guardado correctamente.");
+      alert("Borrador actualizado correctamente.");
     } catch (error) {
       console.error("Error saving draft:", error);
       alert("Error al guardar el borrador.");
@@ -119,10 +181,42 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
   };
 
   const handleSend = async () => {
+    if (!title || !content) {
+      alert("Por favor completa el asunto y el contenido.");
+      return;
+    }
+
     setSending(true);
     try {
       // First save everything
-      await handleSave();
+      await documentService.update(documentId, {
+        title,
+        content,
+        category,
+        doc_type: docType,
+        pdf_password: pdfPassword || undefined,
+      });
+
+      // Upload new attachments
+      if (newAttachments.length > 0) {
+        for (const file of newAttachments) {
+          await documentService.addAttachment(documentId, file);
+        }
+      }
+
+      // Add new recipients
+      if (selectedRecipients.length > 0) {
+        for (const user of selectedRecipients) {
+          try {
+             await documentService.addRecipient(documentId, {
+              recipientUserId: user.id,
+              canWrite: false,
+            });
+          } catch (e) {
+             console.warn("Recipient might already exist", e);
+          }
+        }
+      }
       
       // Then send
       await documentService.send(documentId);
@@ -138,29 +232,25 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
   };
 
   const filteredUsers = availableUsers.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5);
+    (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    !selectedRecipients.find(u => u.id === user.id)
+  );
 
   const addRecipient = (user: User) => {
-    if (!selectedRecipients.find(u => u.id === user.id)) {
-      setSelectedRecipients([...selectedRecipients, user]);
-    }
+    setSelectedRecipients([...selectedRecipients, user]);
     setSearchQuery("");
+    setShowSuggestions(false);
   };
 
   const removeRecipient = (userId: string) => {
     setSelectedRecipients(selectedRecipients.filter(u => u.id !== userId));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setNewAttachments([...newAttachments, ...Array.from(e.target.files)]);
     }
-  };
-
-  const removeAttachment = (index: number) => {
-    setNewAttachments(newAttachments.filter((_, i) => i !== index));
   };
 
   if (loading) {
@@ -175,188 +265,248 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
   }
 
   return (
-    <section className="space-y-8 max-w-5xl mx-auto pb-20">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Editar Borrador</h1>
-          <p className="text-muted-foreground">Continúa editando tu documento.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.back()}>Cancelar</Button>
-          <Button variant="secondary" onClick={handleSave} disabled={saving || sending}>
-            <Save className="mr-2 size-4" />
-            {saving ? "Guardando..." : "Guardar"}
-          </Button>
-          <Button onClick={handleSend} disabled={saving || sending}>
-            <Send className="mr-2 size-4" />
-            {sending ? "Enviando..." : "Enviar"}
-          </Button>
-        </div>
+    <section className="space-y-8">
+      <header className="space-y-2">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Editar Borrador
+        </h1>
+        <p className="text-muted-foreground max-w-2xl">
+          Continúa editando tu documento antes de enviarlo.
+        </p>
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="border-border/70 bg-card/80">
+          <CardHeader>
+            <CardTitle>Tipo de documento</CardTitle>
+            <CardDescription>
+              Selecciona la estructura que mejor se adapte a tu comunicación.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {documentTypeOptions.map((option) => (
+              <SelectableCard
+                key={option.id}
+                id={option.id}
+                title={option.title}
+                description={option.description}
+                icon={option.icon}
+                selected={docType === option.id}
+                onSelect={(value) => setDocType(value as DocumentType)}
+                accent={option.accent}
+              />
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card/80">
+          <CardHeader>
+            <CardTitle>Categoría</CardTitle>
+            <CardDescription>
+              Define el nivel de seguridad y visibilidad del documento.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {categoryOptions.map((option) => (
+              <SelectableCard
+                key={option.id}
+                id={option.id}
+                title={option.title}
+                description={option.description}
+                icon={option.icon}
+                selected={category === option.id}
+                onSelect={(value) => setCategory(value as Category)}
+                accent={option.accent}
+              />
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Left Column: Settings */}
-        <div className="space-y-6 lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Tipo de Documento</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <SelectableCard
-                    title="Oficio"
-                    icon={FileText}
-                    selected={docType === "oficio"}
-                    onClick={() => setDocType("oficio")}
-                  />
-                  <SelectableCard
-                    title="Memorando"
-                    icon={FileText}
-                    selected={docType === "memorando"}
-                    onClick={() => setDocType("memorando")}
-                  />
-                </div>
-              </div>
+      <Card className="border-border/70 bg-card/80">
+        <CardHeader>
+          <CardTitle>Información del documento</CardTitle>
+          <CardDescription>
+            Describe el objetivo y el contenido que será firmado y enviado.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="subject">Asunto</Label>
+            <Input
+              id="subject"
+              placeholder="Ej. Solicitud de información complementaria"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="pdfPassword">Contraseña del PDF (Opcional)</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="pdfPassword"
+                type="password"
+                placeholder="Protege el documento con una contraseña"
+                className="pl-9"
+                value={pdfPassword}
+                onChange={(event) => setPdfPassword(event.target.value)}
+              />
+            </div>
+          </div>
 
-              <div className="space-y-2">
-                <Label>Categoría</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <SelectableCard
-                    title="Normal"
-                    icon={Shield}
-                    selected={category === "normal"}
-                    onClick={() => setCategory("normal")}
-                  />
-                  <SelectableCard
-                    title="Confidencial"
-                    icon={Lock}
-                    selected={category === "cifrado"}
-                    onClick={() => setCategory("cifrado")}
-                  />
-                </div>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="content">Contenido del documento</Label>
+            <RichTextEditor value={content} onChange={setContent} />
+          </div>
+        </CardContent>
+      </Card>
 
-               {category === "cifrado" && (
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña del PDF</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Contraseña para abrir el PDF"
-                    value={pdfPassword}
-                    onChange={(e) => setPdfPassword(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Esta contraseña será requerida para visualizar el PDF generado.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Destinatarios Adicionales</CardTitle>
-              <CardDescription>Agrega más destinatarios a este borrador.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-               <div className="relative">
-                <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar usuario..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              
-              {searchQuery && (
-                <div className="border rounded-md divide-y max-h-40 overflow-y-auto">
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map(user => (
+      <Card className="border-border/70 bg-card/80">
+        <CardHeader>
+          <CardTitle>Destinatarios Adicionales</CardTitle>
+          <CardDescription>
+            Busca y agrega más usuarios que recibirán el documento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="relative space-y-2">
+            <Label htmlFor="recipient-search">Buscar usuario</Label>
+            <div className="relative">
+              <Input
+                id="recipient-search"
+                type="text"
+                placeholder="Escribe nombre o correo..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+              />
+              {showSuggestions && searchQuery && (
+                <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
+                  {filteredUsers.length === 0 ? (
+                    <p className="p-2 text-sm text-muted-foreground">No se encontraron usuarios.</p>
+                  ) : (
+                    filteredUsers.map((user) => (
                       <button
                         key={user.id}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                        type="button"
+                        className="flex w-full flex-col items-start rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                         onClick={() => addRecipient(user)}
                       >
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-xs text-muted-foreground">{user.email}</div>
+                        <span className="font-medium">{user.name}</span>
+                        <span className="text-xs text-muted-foreground">{user.email}</span>
                       </button>
                     ))
-                  ) : (
-                    <div className="p-3 text-sm text-muted-foreground text-center">
-                      No se encontraron usuarios.
-                    </div>
                   )}
                 </div>
               )}
+            </div>
+          </div>
 
-              <div className="flex flex-wrap gap-2">
-                {selectedRecipients.map(user => (
-                  <Badge key={user.id} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-                    {user.name}
-                    <button onClick={() => removeRecipient(user.id)} className="hover:bg-muted-foreground/20 rounded-full p-0.5">
-                      <X className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-           <Card>
-            <CardHeader>
-              <CardTitle>Adjuntos Nuevos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="files">Subir archivos</Label>
-                <Input id="files" type="file" multiple onChange={handleFileChange} />
-              </div>
-              <div className="space-y-2">
-                {newAttachments.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 border rounded-md text-sm">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <Paperclip className="size-4 flex-shrink-0" />
-                      <span className="truncate">{file.name}</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeAttachment(index)}>
-                      <X className="size-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <div className="flex flex-wrap gap-2">
+            {selectedRecipients.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No has seleccionado nuevos destinatarios.
+              </p>
+            ) : (
+              selectedRecipients.map((user) => (
+                <span
+                  key={user.id}
+                  className="inline-flex items-center gap-2 rounded-full border border-[color:var(--palette-secondary)]/50 bg-[color:var(--palette-secondary)]/15 px-3 py-1 text-sm font-medium text-[color:var(--palette-secondary)]"
+                >
+                  {user.name}
+                  <button
+                    type="button"
+                    onClick={() => removeRecipient(user.id)}
+                    className="text-[color:var(--palette-secondary)]/80 transition hover:text-destructive"
+                    aria-label={`Eliminar ${user.name}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Right Column: Content */}
-        <div className="space-y-6 lg:col-span-2">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Contenido del Documento</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Asunto / Título</Label>
-                <Input
-                  id="title"
-                  placeholder="Ej: Solicitud de vacaciones"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
+      <Card className="border-border/70 bg-card/80">
+        <CardHeader>
+          <CardTitle>Archivos adjuntos</CardTitle>
+          <CardDescription>
+            Carga anexos adicionales en formato PDF.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={onFilesChange}
+            multiple
+          />
+          <div
+            className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[color:var(--palette-info)]/60 bg-[color:var(--palette-info)]/5 px-6 py-10 text-center transition hover:border-[color:var(--palette-info)]"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <span className="rounded-full bg-[color:var(--palette-info)]/15 p-3 text-[color:var(--palette-info)]">
+              <Upload className="size-5" />
+            </span>
+            <div>
+              <p className="font-medium">Selecciona o arrastra tus archivos</p>
+              <p className="text-sm text-muted-foreground">
+                Solo se permiten archivos PDF de hasta 10 MB.
+              </p>
+            </div>
+            <Button
+              variant="secondary"
+              type="button"
+              className="border-[color:var(--palette-info)]/60 bg-[color:var(--palette-info)]/20 text-[color:var(--palette-info)] hover:bg-[color:var(--palette-info)]/30"
+            >
+              Elegir archivos PDF
+            </Button>
+          </div>
+          {newAttachments.length > 0 ? (
+            <ul className="space-y-2 text-sm">
+              {newAttachments.map((file) => (
+                <li
+                  key={`${file.name}-${file.size}`}
+                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2"
+                >
+                  <span className="truncate font-medium">{file.name}</span>
+                  <span className="text-muted-foreground">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No se han seleccionado archivos adjuntos nuevos.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-              <div className="space-y-2">
-                <Label>Cuerpo del documento</Label>
-                <div className="min-h-[400px] border rounded-md">
-                  <RichTextEditor value={content} onChange={setContent} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="space-y-3 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-[var(--shadow-card)]">
+        <div className="flex flex-col gap-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <p>
+            El documento será firmado electrónicamente y se generará un código
+            QR para validar su autenticidad antes del envío.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button variant="outline" onClick={handleSave} disabled={saving || sending}>
+              {saving ? "Guardando..." : "Guardar cambios"}
+            </Button>
+            <Button onClick={handleSend} disabled={saving || sending}>
+              {sending ? "Enviando..." : "Firmar y enviar documento"}
+            </Button>
+          </div>
         </div>
       </div>
     </section>

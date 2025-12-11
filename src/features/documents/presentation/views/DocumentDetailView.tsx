@@ -83,7 +83,7 @@ export function DocumentDetailView({ documentId }: DocumentDetailViewProps) {
           Volver
         </Button>
         <div className="flex gap-2">
-          {document.doc_type === "oficio" && (
+          {document.doc_type?.toLowerCase() === "oficio" && (
             <Link href={`/documents/${documentId}/reply`}>
               <Button className="gap-2">
                 <Reply className="size-4" />

@@ -120,7 +120,7 @@ export function InboxView() {
                         <Badge
                           variant="outline"
                           className={`capitalize ${
-                            doc.doc_type === "Oficio"
+                            doc.doc_type?.toLowerCase() === "oficio"
                               ? "border-[color:var(--palette-info)] text-[color:var(--palette-info)]"
                               : "border-[color:var(--palette-warning)] text-[color:var(--palette-warning)]"
                           }`}
@@ -166,17 +166,19 @@ export function InboxView() {
                               Ver
                             </Button>
                           </Link>
-                          <Link href={`/documents/${doc.id}/reply`}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 gap-1 text-[color:var(--palette-secondary)] hover:text-[color:var(--palette-secondary)]"
-                              title="Responder"
-                            >
-                              <Reply className="size-4" />
-                              Responder
-                            </Button>
-                          </Link>
+                          {doc.doc_type?.toLowerCase() === 'oficio' && (
+                            <Link href={`/documents/${doc.id}/reply`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 gap-1 text-[color:var(--palette-secondary)] hover:text-[color:var(--palette-secondary)]"
+                                title="Responder"
+                              >
+                                <Reply className="size-4" />
+                                Responder
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       </td>
                     </tr>
