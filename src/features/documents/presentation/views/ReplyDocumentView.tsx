@@ -49,21 +49,57 @@ export function ReplyDocumentView({ originalDocId }: ReplyDocumentViewProps) {
       return;
     }
 
+    console.log("Original Document:", originalDoc);
+    // We will handle recipient identification after creating the draft to ensure we don't block creation.
+
     try {
       setSending(true);
-      await documentService.reply(originalDocId, {
+      
+      // 1. Create the reply draft
+      const newDoc = await documentService.reply(originalDocId, {
         title: subject,
         content: content,
-        // Category and doc_type might be inherited or set to defaults
         category: originalDoc?.category || "normal",
-        doc_type: "oficio", // Replies are typically Oficios
+        doc_type: "oficio",
       });
+      console.log("Reply draft created:", newDoc);
+
+      // 2. Identify Recipient
+      const recipientId = originalDoc?.sender?.id || originalDoc?.owner_id;
+      
+      if (!recipientId) {
+        alert("No se pudo identificar el destinatario original. Por favor agrégalo manualmente.");
+        router.push(`/documents/${newDoc.id}/edit`);
+        return;
+      }
+
+      // 3. Add Recipient
+      try {
+        console.log("Adding recipient:", recipientId);
+        await documentService.addRecipient(newDoc.id, {
+          recipientUserId: recipientId,
+          canWrite: false,
+        });
+        console.log("Recipient added successfully");
+      } catch (recipError) {
+        console.error("Failed to add recipient:", recipError);
+        alert("No se pudo agregar el destinatario automáticamente. Por favor agrégalo manualmente.");
+        router.push(`/documents/${newDoc.id}/edit`);
+        return;
+      }
+
+      // 4. Send Document
+      await documentService.send(newDoc.id);
       
       alert("Respuesta enviada correctamente.");
       router.push("/documents/sent");
     } catch (err) {
-      console.error("Error sending reply:", err);
-      alert("Error al enviar la respuesta.");
+      console.error("Error in reply flow:", err);
+      alert("Ocurrió un error al procesar la respuesta. Revisa tus borradores.");
+      // If newDoc was created but send failed, we might want to go to drafts or edit.
+      // Since we don't have newDoc id easily accessible in this catch block if it failed *after* creation,
+      // we'll just let the user navigate.
+      router.push("/documents/drafts");
     } finally {
       setSending(false);
     }

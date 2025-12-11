@@ -112,13 +112,36 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
 
         // 2. Fetch Document
         const doc = await documentService.getById(documentId);
+        console.log("Loaded Draft Document:", doc);
         if (doc) {
           setTitle(doc.title);
           setContent(doc.content);
           setCategory((doc.category?.toLowerCase() as Category) || "normal");
           setDocType((doc.doc_type?.toLowerCase() as DocumentType) || "oficio");
-          // Note: Existing recipients are not easily editable via this flow yet, 
-          // but we can add new ones.
+          
+          // Try to populate existing recipients
+          if (doc.recipients && Array.isArray(doc.recipients)) {
+             // We need to map the recipients to User objects. 
+             // Assuming doc.recipients contains objects with at least an id, and maybe user details.
+             // If the API returns full user objects in recipients, great. If not, we might need to match with availableUsers.
+             const existingRecipients: User[] = [];
+             doc.recipients.forEach((r: any) => {
+                // Check if 'r' is a user object or has a user property
+                const userId = r.id || r.recipient_id || r.user_id;
+                if (userId) {
+                   const foundUser = users.find(u => u.id === userId);
+                   if (foundUser) {
+                      existingRecipients.push(foundUser);
+                   } else if (r.name && r.email) {
+                      // If we have name/email but not in availableUsers list (maybe inactive?), add it anyway
+                      existingRecipients.push({ id: userId, name: r.name, email: r.email, role: 'user' });
+                   }
+                }
+             });
+             // Remove duplicates
+             const uniqueRecipients = Array.from(new Map(existingRecipients.map(item => [item.id, item])).values());
+             setSelectedRecipients(uniqueRecipients);
+          }
         }
       } catch (error) {
         console.error("Error loading draft:", error);
@@ -183,6 +206,11 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
   const handleSend = async () => {
     if (!title || !content) {
       alert("Por favor completa el asunto y el contenido.");
+      return;
+    }
+
+    if (selectedRecipients.length === 0) {
+      alert("Debes agregar al menos un destinatario para enviar el documento.");
       return;
     }
 
@@ -365,9 +393,9 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
 
       <Card className="border-border/70 bg-card/80">
         <CardHeader>
-          <CardTitle>Destinatarios Adicionales</CardTitle>
+          <CardTitle>Destinatarios</CardTitle>
           <CardDescription>
-            Busca y agrega más usuarios que recibirán el documento.
+            Gestiona los usuarios que recibirán el documento.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -410,7 +438,7 @@ export function EditDocumentView({ documentId }: EditDocumentViewProps) {
           <div className="flex flex-wrap gap-2">
             {selectedRecipients.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No has seleccionado nuevos destinatarios.
+                No hay destinatarios seleccionados.
               </p>
             ) : (
               selectedRecipients.map((user) => (
