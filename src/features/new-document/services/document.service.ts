@@ -18,6 +18,7 @@ export interface AddRecipientDto {
 
 export interface Document {
   id: string;
+  owner_id?: string;
   title: string;
   content: string;
   category?: string;
