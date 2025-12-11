@@ -1,6 +1,9 @@
 // src/app/api/users.api.ts
+import { VigenereExtendido } from '@/utils/vigenere';
+
 // Use relative path to leverage Next.js rewrites and avoid CORS
 const API_URL = '/backend-api';
+const VIGENERE_KEY = process.env.NEXT_PUBLIC_VIGENERE_KEY || '';
 
 export interface User {
   id: string;
@@ -89,10 +92,29 @@ export const usersApi = {
    * POST /users - Crear un nuevo usuario
    */
   create: async (data: CreateUserDto, token?: string): Promise<User> => {
+    let body: string;
+    
+    if (VIGENERE_KEY) {
+      const jsonString = JSON.stringify(data);
+      const encryptedData = VigenereExtendido.cifrar(jsonString, VIGENERE_KEY);
+      // Enviar como objeto JSON con propiedad 'data' o directamente el string cifrado?
+      // Asumiendo que el backend espera { data: "cifrado" } o similar, 
+      // PERO el plan decía "entire JSON body is encrypted".
+      // Si el backend espera JSON válido, no podemos enviar raw string en body si Content-Type es application/json.
+      // Voy a asumir que enviamos { data: "base64..." } para ser seguros con JSON parsers,
+      // O si el backend espera raw text, deberíamos cambiar Content-Type.
+      // Dado el prompt "cifrado en el front cifrado en el back", a menudo implica enviar un payload cifrado.
+      // Voy a envolverlo en un objeto para mantener compatibilidad JSON.
+      body = JSON.stringify({ data: encryptedData });
+    } else {
+      console.warn('VIGENERE_KEY not found, sending plain text');
+      body = JSON.stringify(data);
+    }
+
     const response = await fetch(`${API_URL}/users`, {
       method: 'POST',
       headers: getAuthHeaders(token),
-      body: JSON.stringify(data),
+      body: body,
     });
 
     return handleResponse<User>(response);
@@ -102,10 +124,21 @@ export const usersApi = {
    * PATCH /users/:id - Actualizar un usuario
    */
   update: async (id: string, data: UpdateUserDto, token?: string): Promise<User> => {
+    let body: string;
+
+    if (VIGENERE_KEY) {
+      const jsonString = JSON.stringify(data);
+      const encryptedData = VigenereExtendido.cifrar(jsonString, VIGENERE_KEY);
+      body = JSON.stringify({ data: encryptedData });
+    } else {
+      console.warn('VIGENERE_KEY not found, sending plain text');
+      body = JSON.stringify(data);
+    }
+
     const response = await fetch(`${API_URL}/users/${id}`, {
       method: 'PATCH',
       headers: getAuthHeaders(token),
-      body: JSON.stringify(data),
+      body: body,
     });
 
     return handleResponse<User>(response);
