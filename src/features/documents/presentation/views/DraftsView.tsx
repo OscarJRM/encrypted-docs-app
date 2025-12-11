@@ -12,35 +12,24 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { Badge } from "@/app/components/ui/badge";
 
-// Mock Data
-const draftDocuments = [
-  {
-    id: "d1",
-    subject: "Propuesta de nueva normativa de seguridad",
-    type: "oficio",
-    category: "normal",
-    lastModified: "2024-05-22 10:30 AM",
-    progress: "80%",
-  },
-  {
-    id: "d2",
-    subject: "Memo interno sobre vacaciones",
-    type: "memorando",
-    category: "cifrado",
-    lastModified: "2024-05-21 16:45 PM",
-    progress: "45%",
-  },
-  {
-    id: "d3",
-    subject: "Respuesta a solicitud ciudadana #12345",
-    type: "oficio",
-    category: "normal",
-    lastModified: "2024-05-20 09:15 AM",
-    progress: "20%",
-  },
-];
+
+import { useDocuments } from "../../hooks/useDocuments";
+import Link from "next/link";
 
 export function DraftsView() {
+  const { documents, loading, error } = useDocuments('drafts');
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando borradores...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <section className="space-y-8">
       <header className="space-y-2">
@@ -64,7 +53,7 @@ export function DraftsView() {
           <div className="space-y-1">
             <CardTitle>Listado de Borradores</CardTitle>
             <CardDescription>
-              Total: {draftDocuments.length} borradores guardados
+              Total: {documents.length} borradores guardados
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -96,9 +85,6 @@ export function DraftsView() {
                     Categoría
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Progreso
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                     Última Modificación
                   </th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
@@ -107,70 +93,69 @@ export function DraftsView() {
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
-                {draftDocuments.map((doc) => (
-                  <tr
-                    key={doc.id}
-                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                  >
-                    <td className="p-4 align-middle">
-                      <Badge
-                        variant="outline"
-                        className={`capitalize ${
-                          doc.type === "oficio"
-                            ? "border-[color:var(--palette-info)] text-[color:var(--palette-info)]"
-                            : "border-[color:var(--palette-warning)] text-[color:var(--palette-warning)]"
-                        }`}
-                      >
-                        {doc.type}
-                      </Badge>
-                    </td>
-                    <td className="p-4 align-middle font-medium">
-                      {doc.subject || "(Sin asunto)"}
-                    </td>
-                    <td className="p-4 align-middle">
-                      <Badge
-                        variant={doc.category === "cifrado" ? "destructive" : "success"}
-                        className="capitalize"
-                      >
-                        {doc.category}
-                      </Badge>
-                    </td>
-                    <td className="p-4 align-middle">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-24 rounded-full bg-secondary overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-[color:var(--palette-primary)]"
-                            style={{ width: doc.progress }}
-                          />
-                        </div>
-                        <span className="text-xs text-muted-foreground">{doc.progress}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 align-middle text-muted-foreground">
-                      {doc.lastModified}
-                    </td>
-                    <td className="p-4 align-middle text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 gap-2 text-[color:var(--palette-primary)] hover:text-[color:var(--palette-primary)]"
-                        >
-                          <Pencil className="size-3.5" />
-                          Continuar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-[color:var(--palette-danger)] hover:text-[color:var(--palette-danger)]"
-                        >
-                          <Trash2 className="size-4" />
-                          <span className="sr-only">Eliminar</span>
-                        </Button>
-                      </div>
+                {documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-muted-foreground">
+                      No hay borradores guardados.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  documents.map((doc) => (
+                    <tr
+                      key={doc.id}
+                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                    >
+                      <td className="p-4 align-middle">
+                        <Badge
+                          variant="outline"
+                          className={`capitalize ${
+                            doc.doc_type === "Oficio"
+                              ? "border-[color:var(--palette-info)] text-[color:var(--palette-info)]"
+                              : "border-[color:var(--palette-warning)] text-[color:var(--palette-warning)]"
+                          }`}
+                        >
+                          {doc.doc_type || 'Documento'}
+                        </Badge>
+                      </td>
+                      <td className="p-4 align-middle font-medium">
+                        {doc.title || "(Sin asunto)"}
+                      </td>
+                      <td className="p-4 align-middle">
+                        <Badge
+                          variant={doc.category === "Confidencial" ? "destructive" : "success"}
+                          className="capitalize"
+                        >
+                          {doc.category || 'General'}
+                        </Badge>
+                      </td>
+                      <td className="p-4 align-middle text-muted-foreground">
+                        {new Date(doc.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 align-middle text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/documents/${doc.id}/edit`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 gap-2 text-[color:var(--palette-primary)] hover:text-[color:var(--palette-primary)]"
+                            >
+                              <Pencil className="size-3.5" />
+                              Continuar
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-[color:var(--palette-danger)] hover:text-[color:var(--palette-danger)]"
+                          >
+                            <Trash2 className="size-4" />
+                            <span className="sr-only">Eliminar</span>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

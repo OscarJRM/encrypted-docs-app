@@ -12,41 +12,24 @@ import {
 import { Input } from "@/app/components/ui/input";
 import { Badge } from "@/app/components/ui/badge";
 
-// Mock Data
-const sentDocuments = [
-  {
-    id: "101",
-    recipient: "Contraloría General",
-    subject: "Respuesta a auditoría interna",
-    type: "oficio",
-    date: "2024-05-21",
-    referenceNumber: "OF-2024-001",
-    category: "normal",
-    status: "Entregado",
-  },
-  {
-    id: "102",
-    recipient: "Equipo de Desarrollo",
-    subject: "Asignación de recursos proyecto X",
-    type: "memorando",
-    date: "2024-05-20",
-    referenceNumber: "MEM-2024-045",
-    category: "normal",
-    status: "Entregado",
-  },
-  {
-    id: "103",
-    recipient: "Proveedor de Servicios TI",
-    subject: "Renovación de contrato",
-    type: "oficio",
-    date: "2024-05-15",
-    referenceNumber: "OF-2024-002",
-    category: "cifrado",
-    status: "Entregado",
-  },
-];
+
+import { useDocuments } from "../../hooks/useDocuments";
+import Link from "next/link";
 
 export function SentView() {
+  const { documents, loading, error } = useDocuments('outbox');
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando documentos enviados...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <section className="space-y-8">
       <header className="space-y-2">
@@ -70,7 +53,7 @@ export function SentView() {
           <div className="space-y-1">
             <CardTitle>Historial de Salida</CardTitle>
             <CardDescription>
-              Total: {sentDocuments.length} documentos enviados
+              Total: {documents.length} documentos enviados
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -116,61 +99,74 @@ export function SentView() {
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
-                {sentDocuments.map((doc) => (
-                  <tr
-                    key={doc.id}
-                    className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                  >
-                    <td className="p-4 align-middle">
-                      <Badge
-                        variant="outline"
-                        className={`capitalize ${
-                          doc.type === "oficio"
-                            ? "border-[color:var(--palette-info)] text-[color:var(--palette-info)]"
-                            : "border-[color:var(--palette-warning)] text-[color:var(--palette-warning)]"
-                        }`}
-                      >
-                        {doc.type}
-                      </Badge>
-                    </td>
-                    <td className="p-4 align-middle font-medium">
-                      {doc.recipient}
-                    </td>
-                    <td className="p-4 align-middle">
-                      <div className="flex flex-col">
-                        <span>{doc.subject}</span>
-                        <span className="text-xs text-muted-foreground font-mono">{doc.referenceNumber}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 align-middle">
-                      <Badge
-                        variant={doc.category === "cifrado" ? "destructive" : "success"}
-                        className="capitalize"
-                      >
-                        {doc.category}
-                      </Badge>
-                    </td>
-                    <td className="p-4 align-middle text-muted-foreground">
-                      {doc.date}
-                    </td>
-                    <td className="p-4 align-middle">
-                      <Badge variant="success" className="capitalize">
-                        {doc.status}
-                      </Badge>
-                    </td>
-                    <td className="p-4 align-middle text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-2 text-[color:var(--palette-primary)] hover:text-[color:var(--palette-primary)]"
-                        title="Ver PDF"
-                      >
-                        <Eye className="size-4" />
-                        <span className="hidden sm:inline">Ver</span>
-                      </Button>
+                {documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-muted-foreground">
+                      No hay documentos enviados.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  documents.map((doc) => (
+                    <tr
+                      key={doc.id}
+                      className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                    >
+                      <td className="p-4 align-middle">
+                        <Badge
+                          variant="outline"
+                          className={`capitalize ${
+                            doc.doc_type === "Oficio"
+                              ? "border-[color:var(--palette-info)] text-[color:var(--palette-info)]"
+                              : "border-[color:var(--palette-warning)] text-[color:var(--palette-warning)]"
+                          }`}
+                        >
+                          {doc.doc_type || 'Documento'}
+                        </Badge>
+                      </td>
+                      <td className="p-4 align-middle font-medium">
+                        {/* Assuming recipients is an array of objects with name or email, or just strings if simplified */}
+                        {Array.isArray(doc.recipients) && doc.recipients.length > 0
+                          ? doc.recipients.map((r: any) => r.name || r.email || r.recipientUserId).join(", ")
+                          : "Sin destinatarios"}
+                      </td>
+                      <td className="p-4 align-middle">
+                        <div className="flex flex-col">
+                          <span>{doc.title}</span>
+                          <span className="text-xs text-muted-foreground font-mono">{doc.id.substring(0, 8)}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 align-middle">
+                        <Badge
+                          variant={doc.category === "Confidencial" ? "destructive" : "success"}
+                          className="capitalize"
+                        >
+                          {doc.category || 'General'}
+                        </Badge>
+                      </td>
+                      <td className="p-4 align-middle text-muted-foreground">
+                        {new Date(doc.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 align-middle">
+                        <Badge variant="success" className="capitalize">
+                          {doc.status}
+                        </Badge>
+                      </td>
+                      <td className="p-4 align-middle text-right">
+                        <Link href={`/documents/${doc.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 gap-2 text-[color:var(--palette-primary)] hover:text-[color:var(--palette-primary)]"
+                            title="Ver PDF"
+                          >
+                            <Eye className="size-4" />
+                            <span className="hidden sm:inline">Ver</span>
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

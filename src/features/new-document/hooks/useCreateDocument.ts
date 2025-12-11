@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { documentService } from "../services/document.service";
 import { usersApi, User } from "@/app/api/users.api";
 
 export function useCreateDocument() {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
 
@@ -31,12 +32,15 @@ export function useCreateDocument() {
     content: string,
     category: string,
     docType: string,
-    recipients: string[], // emails
+    recipients: string[], // user IDs
     pdfPassword?: string
   ) => {
     setLoading(true);
     try {
+      console.log("Starting document creation flow...");
+      
       // 1. Create Document (Draft)
+      console.log("1. Creating document draft...");
       const docData = await documentService.create({
         title,
         content,
@@ -46,28 +50,36 @@ export function useCreateDocument() {
       });
 
       const documentId = docData.id;
+      console.log("Document created with ID:", documentId);
 
       // 2. Add Recipients
-      for (const email of recipients) {
-        const user = users.find((u) => u.email === email);
-        if (user) {
+      console.log(`2. Adding ${recipients.length} recipients...`);
+      for (const userId of recipients) {
+        console.log(`Adding recipient: ${userId}`);
+        try {
           await documentService.addRecipient(documentId, {
-            recipientUserId: user.id,
-            canWrite: false, // Default to read-only for now
+            recipientUserId: userId,
+            canWrite: false,
           });
-        } else {
-            console.warn(`User with email ${email} not found.`);
+          console.log(`Recipient ${userId} added successfully.`);
+        } catch (recipError) {
+          console.error(`Failed to add recipient ${userId}:`, recipError);
+          throw new Error(`Error al agregar destinatario ${userId}`);
         }
       }
 
       // 3. Send Document
+      console.log("3. Sending document...");
       await documentService.send(documentId);
+      console.log("Document sent successfully.");
 
       alert("Documento enviado correctamente");
-      router.push("/documents"); 
+      
+      const isAdmin = pathname?.startsWith("/admin");
+      router.push(isAdmin ? "/admin/documents/sent" : "/documents/sent"); 
     } catch (error) {
-      console.error("Error creating document:", error);
-      alert("Error al crear el documento");
+      console.error("Error in createAndSendDocument flow:", error);
+      alert("Error al crear y enviar el documento. Revisa la consola para más detalles.");
     } finally {
       setLoading(false);
     }

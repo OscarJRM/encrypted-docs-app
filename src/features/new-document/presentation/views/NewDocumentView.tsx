@@ -27,6 +27,7 @@ import {
 } from "../components/SelectableCard";
 import { RichTextEditor } from "../components/RichTextEditor";
 import { useCreateDocument } from "../../hooks/useCreateDocument";
+import { User } from "@/app/api/users.api";
 
 type DocumentType = "oficio" | "memorando";
 type Category = "normal" | "cifrado";
@@ -77,31 +78,39 @@ const categoryOptions: Array<{
   },
 ];
 
+
+
 export function NewDocumentView() {
-  const { createAndSendDocument, loading } = useCreateDocument();
+  const { createAndSendDocument, loading, availableUsers } = useCreateDocument();
   const [documentType, setDocumentType] = useState<DocumentType>("oficio");
   const [category, setCategory] = useState<Category>("normal");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [pdfPassword, setPdfPassword] = useState("");
-  const [recipientInput, setRecipientInput] = useState("");
-  const [recipients, setRecipients] = useState<string[]>([]);
+  
+  // Recipient selection state
+  const [selectedRecipients, setSelectedRecipients] = useState<User[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const addRecipient = () => {
-    const value = recipientInput.trim();
-    if (!value) return;
-    if (recipients.includes(value)) {
-      setRecipientInput("");
-      return;
-    }
-    setRecipients((prev) => [...prev, value]);
-    setRecipientInput("");
+  // Filter users based on search term and exclude already selected ones
+  const filteredUsers = availableUsers.filter((user) =>
+    (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     user.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    !selectedRecipients.find((s) => s.id === user.id)
+  );
+
+  const addRecipient = (user: User) => {
+    setSelectedRecipients((prev) => [...prev, user]);
+    setSearchTerm("");
+    setShowSuggestions(false);
   };
 
-  const removeRecipient = (email: string) => {
-    setRecipients((prev) => prev.filter((item) => item !== email));
+  const removeRecipient = (userId: string) => {
+    setSelectedRecipients((prev) => prev.filter((u) => u.id !== userId));
   };
 
   const onFilesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,7 +124,7 @@ export function NewDocumentView() {
       alert("Por favor completa el asunto y el contenido.");
       return;
     }
-    if (recipients.length === 0) {
+    if (selectedRecipients.length === 0) {
       alert("Debes agregar al menos un destinatario.");
       return;
     }
@@ -125,13 +134,14 @@ export function NewDocumentView() {
       content,
       category,
       documentType,
-      recipients,
+      selectedRecipients.map((u) => u.id),
       pdfPassword || undefined
     );
   };
 
   return (
     <section className="space-y-8">
+      {/* ... (Header and Document Type/Category cards remain same) ... */}
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Crear documento
@@ -234,49 +244,63 @@ export function NewDocumentView() {
         <CardHeader>
           <CardTitle>Destinatarios</CardTitle>
           <CardDescription>
-            Agrega los correos institucionales que recibirán el documento.
+            Busca y selecciona los usuarios que recibirán el documento.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 md:flex-row">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="recipient">Correo institucional</Label>
+          <div className="relative space-y-2">
+            <Label htmlFor="recipient-search">Buscar usuario</Label>
+            <div className="relative">
               <Input
-                id="recipient"
-                type="email"
-                placeholder="Ej. direccion@institucion.gob"
-                value={recipientInput}
-                onChange={(event) => setRecipientInput(event.target.value)}
+                id="recipient-search"
+                type="text"
+                placeholder="Escribe nombre o correo..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
               />
-            </div>
-            <div className="flex items-end">
-              <Button
-                type="button"
-                className="w-full md:w-auto"
-                onClick={addRecipient}
-              >
-                <UserPlus className="size-4" />
-                Agregar
-              </Button>
+              {showSuggestions && searchTerm && (
+                <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
+                  {filteredUsers.length === 0 ? (
+                    <p className="p-2 text-sm text-muted-foreground">No se encontraron usuarios.</p>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        className="flex w-full flex-col items-start rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => addRecipient(user)}
+                      >
+                        <span className="font-medium">{user.name}</span>
+                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
+
           <div className="flex flex-wrap gap-2">
-            {recipients.length === 0 ? (
+            {selectedRecipients.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Aún no hay destinatarios agregados.
+                Aún no hay destinatarios seleccionados.
               </p>
             ) : (
-              recipients.map((email) => (
+              selectedRecipients.map((user) => (
                 <span
-                  key={email}
+                  key={user.id}
                   className="inline-flex items-center gap-2 rounded-full border border-[color:var(--palette-secondary)]/50 bg-[color:var(--palette-secondary)]/15 px-3 py-1 text-sm font-medium text-[color:var(--palette-secondary)]"
                 >
-                  {email}
+                  {user.name}
                   <button
                     type="button"
-                    onClick={() => removeRecipient(email)}
+                    onClick={() => removeRecipient(user.id)}
                     className="text-[color:var(--palette-secondary)]/80 transition hover:text-destructive"
-                    aria-label={`Eliminar ${email}`}
+                    aria-label={`Eliminar ${user.name}`}
                   >
                     ×
                   </button>
